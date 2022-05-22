@@ -5,15 +5,6 @@
     "CH4": {
       "type": "motoko",
       "main": "src/CH4/main.mo"
-    },
-    "CH4_assets": {
-      "type": "assets",
-      "source": [
-        "src/CH4_assets/assets"
-      ],
-      "dependencies": [
-        "CH4"
-      ]
     }
   },
   "defaults": {
