@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "dfx": "0.9.3",
+  "canisters": {
+    "CH4": {
+      "type": "motoko",
+      "main": "src/CH4/main.mo"
+    },
+    "CH4_assets": {
+      "type": "assets",
+      "source": [
+        "src/CH4_assets/assets"
+      ],
+      "dependencies": [
+        "CH4"
+      ]
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "",
+      "args": ""
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  }
+}
