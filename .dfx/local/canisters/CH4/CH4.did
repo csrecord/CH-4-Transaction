@@ -1,4 +1,65 @@
+type UpdateArgs = 
+ record {
+   index: nat;
+   newPrice: nat;
+ };
 type Sell = 
  service {
+   addCompany: (Company) -> (bool);
+   cancelBuy: (CancelArgs) -> (Result_1);
+   cancelSell: (CancelArgs) -> (Result_2);
+   deal: () -> ();
+   getBuyList: () -> (vec record {
+                            nat;
+                            nat;
+                          }) query;
+   getSellList: () -> (vec record {
+                             nat;
+                             nat;
+                           }) query;
+   listBuy: (ListArgs) -> (Result_1);
+   listSell: (ListArgs) -> (Result_2);
+   updateBuyPrice: (UpdateArgs) -> (Result_1);
+   updateSellPrice: (UpdateArgs) -> (Result);
  };
-service : (principal) -> Sell
+type Result_2 = 
+ variant {
+   err: Error;
+   ok: nat;
+ };
+type Result_1 = 
+ variant {
+   err: Error;
+   ok;
+ };
+type Result = 
+ variant {
+   err: Error;
+   ok: bool;
+ };
+type ListArgs = 
+ record {
+   amount: nat;
+   price: nat;
+ };
+type Error = 
+ variant {
+   Change_Old_listSellMap_Error;
+   Delete_Old_listSellMap_Error;
+   Insufficient_CH4;
+   Insufficient_money;
+   Invaild_index;
+   Order_Not_Open;
+   TransferFrom_CH4_Error;
+   TransferFrom_ToUser_Error;
+   Unauthorized;
+ };
+type Company = 
+ record {
+   desc: text;
+   name: text;
+   "principal": principal;
+   webLink: text;
+ };
+type CancelArgs = record {index: nat;};
+service : (principal, principal, principal, principal) -> Sell

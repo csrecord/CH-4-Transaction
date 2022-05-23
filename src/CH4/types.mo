@@ -1,3 +1,4 @@
+import Hash "mo:base/Hash";
 
 module {
     
@@ -17,10 +18,81 @@ module {
     public type Order = {
         index: Nat;
         amount: Nat;
-        user: Principal;
+        owner: Principal;
         var price: Nat;
         var status: OrderStatus;
         createAt: Int;
+    };
+
+    public type ListArgs = {
+        amount: Nat;
+        price: Nat;
+    };
+
+    public type UpdateArgs = {
+        index: Nat;
+        newPrice: Nat;
+    };
+
+    public type CancelArgs = {
+        index: Nat;
+    };
+
+    public type Direction = {
+        #Buy;
+        #Sell;
+    };
+
+    public type Operation = {
+        #deposit : {
+            from: Principal;
+            to: Principal;
+            amount: Nat;
+        };
+        #withdraw : {
+            from: Principal;
+            to: Principal;
+            amount: Nat;
+        };
+        #list : {
+            orderId: Nat;
+            user: Principal;
+            price: Nat;
+            amount: Nat;
+            direction: Direction;
+        };
+        #cancel : {
+            orderId: Nat;
+            user: Principal;
+        };
+        #deal : {
+            orderId: Nat;
+            seller: Principal;
+            buyer: Principal;
+            price: Nat;
+            amount: Nat;
+        };
+    };
+
+    public type OrderExt = {
+        index: Nat;
+        amount: Nat;
+        owner: Principal;
+        price: Nat; // can edit price after listing
+        status: OrderStatus; // upadte to #done after order execution
+        createAt: Int;
+    };
+
+    public func _hashOfOrder(
+        order: Order
+    ): Hash.Hash{
+        Hash.hash(order.index)
+    };
+
+    public func _equalOfOrder(
+        a: Order,b: Order
+    ): Bool{
+        a.index == b.index and a.price == b.price
     };
 };    
 
