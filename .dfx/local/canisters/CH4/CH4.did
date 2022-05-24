@@ -7,7 +7,7 @@ type Sell =
  service {
    addCompany: (Company) -> (bool);
    cancelBuy: (CancelArgs) -> (Result_1);
-   cancelSell: (CancelArgs) -> (Result_2);
+   cancelSell: (CancelArgs) -> (Result_1);
    deal: () -> ();
    getBuyList: () -> (vec record {
                             nat;
@@ -18,19 +18,14 @@ type Sell =
                              nat;
                            }) query;
    listBuy: (ListArgs) -> (Result_1);
-   listSell: (ListArgs) -> (Result_2);
-   updateBuyPrice: (UpdateArgs) -> (Result_1);
+   listSell: (ListArgs) -> (Result_1);
+   updateBuyPrice: (UpdateArgs) -> (Result);
    updateSellPrice: (UpdateArgs) -> (Result);
- };
-type Result_2 = 
- variant {
-   err: Error;
-   ok: nat;
  };
 type Result_1 = 
  variant {
    err: Error;
-   ok;
+   ok: nat;
  };
 type Result = 
  variant {
@@ -47,11 +42,13 @@ type Error =
    Change_Old_listSellMap_Error;
    Delete_Old_listSellMap_Error;
    Insufficient_CH4;
-   Insufficient_money;
+   Insufficient_wicp;
    Invaild_index;
+   NewPrice_Equal_OldPrice;
    Order_Not_Open;
    TransferFrom_CH4_Error;
    TransferFrom_ToUser_Error;
+   TransferFrom_wicp_Error;
    Unauthorized;
  };
 type Company = 

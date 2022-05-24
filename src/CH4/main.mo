@@ -12,7 +12,7 @@ import Types "types";
 shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Principal,storage_: Principal) = this {
 
   public type Error = {
-    #Insufficient_money;
+    #Insufficient_wicp;
     #Insufficient_CH4;
     #TransferFrom_CH4_Error;
     #Invaild_index;
@@ -21,6 +21,8 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
     #Change_Old_listSellMap_Error;
     #Delete_Old_listSellMap_Error;
     #TransferFrom_ToUser_Error;
+    #TransferFrom_wicp_Error;
+    #NewPrice_Equal_OldPrice;
   };
   
   // DIP20 token actor
@@ -139,7 +141,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
   public shared({caller}) func updateSellPrice(
       args: UpdateArgs
   ): async Result.Result<Bool, Error> {
-      var order = switch(sells.get(args.index)) {
+      let order = switch(sells.get(args.index)) {
           case(null) { return #err(#Invaild_index);};
           case(?o) { o }; 
       };
@@ -148,6 +150,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
           case(#open(id)) {};
           case(_) { return #err(#Order_Not_Open);};
       };
+      if(order.price == args.newPrice) return #err(#NewPrice_Equal_OldPrice);
       listSellArray[order.price] -= order.amount;
       switch(listSellMap.get(order.price)) {
           case(null) { return #err(#Change_Old_listSellMap_Error);};
@@ -155,6 +158,19 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
               let newOrderSet = TrieSet.delete(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
               listSellMap.put(order.price, newOrderSet);
           };
+      };
+      if(order.price == listSellMin) {
+          if(args.newPrice < listSellMin) {
+              listSellMin := args.newPrice;
+              listSellMin_Number := 1;
+          } else if(args.newPrice > listSellMin) {
+              if(listSellMin_Number > 1) {
+                  listSellMin_Number -= 1;
+              } else {
+                  listSellMin := 60000;
+                  listSellMin_Number := 1;
+              };
+          }; 
       };
       order.price := args.newPrice;
       listSellArray[args.newPrice] += order.amount;
@@ -168,10 +184,6 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
               listSellMap.put(args.newPrice, newOrderSet);
           };
       };
-      if(args.newPrice < listSellMin and listSellMin_Number == 1) {
-          listSellMin := args.newPrice;
-          listSellMin_Number := 1;
-      };
       sells.put(args.index, order);
       return #ok(true);
   };
@@ -179,7 +191,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
   public shared({caller}) func cancelSell(
       args: CancelArgs
   ): async Result.Result<Nat, Error> {
-      var order = switch(sells.get(args.index)) {
+      let order = switch(sells.get(args.index)) {
           case(null) { return #err(#Invaild_index);};
           case(?o) { o };
       };
@@ -210,7 +222,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
               txcounter += 1;
               order.status := #cancel(txcounter);
               ignore storage.addOrder(_toOrderExt(order));
-              ignore storage.addRecord(caller, #cancel({orderId = order.index; user = caller}), Time.now());
+              ignore storage.addRecord(caller, #cancel({orderId = order.index; user = caller; direction = #Sell}), Time.now());
               return #ok(txcounter);
           };
           case(#Err(e)) {
@@ -257,20 +269,154 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
   // Tx记录
   public shared({caller}) func listBuy(
       args: ListArgs
-  ): async Result.Result<(), Error> {
-      #err(#Insufficient_money)
+  ): async Result.Result<Nat, Error> {
+      let balance = await wicp.balanceOf(caller);
+      if(balance < args.amount) { return #err(#Insufficient_wicp);};
+      switch(await wicp.transferFrom(caller, Principal.fromActor(this), args.amount)) {
+          case(#Ok(id)) {};
+          case(#Err(e)) { return #err(#TransferFrom_wicp_Error);};
+      }; 
+      listBuyIndex += 1;
+      txcounter += 1;
+      let order: Order = {
+          index = listBuyIndex;
+          amount = args.amount;
+          owner = caller;
+          var price = args.price;
+          var status = #open(txcounter);
+          createAt = Time.now();
+      };
+      listBuyArray[args.price] += args.amount;
+      if(args.price > listBuyMax) {
+          listBuyMax := args.price;
+          listBuyMax_Number := 1;
+      } else if(args.price == listBuyMax) {
+          listBuyMax_Number += 1;
+      };
+      switch(listBuyMap.get(args.price)) {
+          case(null) {
+              let orderSet = TrieSet.fromArray([order], Types._hashOfOrder, Types._equalOfOrder);
+              listBuyMap.put(args.price, orderSet);
+          };
+          case(?orderSet) {
+              let newOrderSet = TrieSet.put(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
+              listBuyMap.put(args.price, newOrderSet);
+          };
+      };
+      buys.put(listBuyIndex, order);
+      ignore storage.addRecord(caller, #list({orderId = order.index; user = caller; price = args.price; amount = args.amount; direction = #Buy;}), Time.now());
+      return #ok(order.index);
   };
 
   public shared({caller}) func updateBuyPrice(
       args: UpdateArgs
-  ): async Result.Result<(),Error> {
-      #err(#Insufficient_money)
+  ): async Result.Result<Bool, Error> {
+      let order = switch(buys.get(args.index)) {
+          case(null) { return #err(#Invaild_index);};
+          case(?o) { o }; 
+      };
+      if(caller != order.owner) return #err(#Unauthorized);
+      switch(order.status) {
+          case(#open(id)) {};
+          case(_) { return #err(#Order_Not_Open);};
+      };
+      if(order.price == args.newPrice) return #err(#NewPrice_Equal_OldPrice);
+      listBuyArray[order.price] -= order.amount;
+      switch(listBuyMap.get(order.price)) {
+          case(null) { return #err(#Change_Old_listSellMap_Error);};
+          case(?orderSet) {
+              let newOrderSet = TrieSet.delete(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
+              listBuyMap.put(order.price, newOrderSet);
+          };
+      };
+      if(order.price == listBuyMax) {
+          if(args.newPrice > listBuyMax) {
+              listBuyMax := args.newPrice;
+              listBuyMax_Number := 1;
+          } else if(args.newPrice < listBuyMax) {
+              if(listBuyMax_Number > 1) {
+                  listBuyMax_Number -= 1;
+              } else {
+                  listBuyMax := 0;
+                  listBuyMax_Number := 1;
+              };
+          }; 
+      };
+      order.price := args.newPrice;
+      listBuyArray[args.newPrice] += order.amount;
+      switch(listBuyMap.get(args.newPrice)) {
+          case(null) {
+              let orderSet = TrieSet.fromArray([order], Types._hashOfOrder, Types._equalOfOrder);
+              listBuyMap.put(args.newPrice, orderSet);
+          };
+          case(?orderSet) {
+              let newOrderSet = TrieSet.put(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
+              listBuyMap.put(args.newPrice, newOrderSet);
+          };
+      };
+      buys.put(args.index, order);
+      return #ok(true);
   };
 
   public shared({caller}) func cancelBuy(
       args: CancelArgs
-  ): async Result.Result<(),Error> {
-      #err(#Insufficient_money)
+  ): async Result.Result<Nat, Error> {
+      let order = switch(buys.get(args.index)) {
+          case(null) { return #err(#Invaild_index);};
+          case(?o) { o };
+      };
+      switch(order.status) {
+          case(#open(id)) {};
+          case(_) { return #err(#Order_Not_Open);};
+      };
+      if(caller != order.owner) return #err(#Unauthorized);
+      buys.delete(args.index);
+      switch(listBuyMap.get(order.price)) {
+          case(null) { return #err(#Delete_Old_listSellMap_Error)};
+          case(?orderSet) {
+              let newOrderSet = TrieSet.delete(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
+              listBuyMap.put(order.price, newOrderSet);
+          }; 
+      };
+      listBuyArray[order.price] -= order.amount;
+      if(order.price == listBuyMax) {
+          if(listBuyMax_Number > 1) {
+              listBuyMax_Number -= 1;
+          } else {
+              listBuyMax_Number := 0;
+              listBuyMax := 0;
+          };
+      };
+      switch(await wicp.transferFrom(Principal.fromActor(this), caller, order.amount)) {
+          case(#Ok(id)) {
+              txcounter += 1;
+              order.status := #cancel(txcounter);
+              ignore storage.addOrder(_toOrderExt(order));
+              ignore storage.addRecord(caller, #cancel({orderId = order.index; user = caller; direction = #Buy}), Time.now());
+              return #ok(txcounter);
+          };
+          case(#Err(e)) {
+              buys.put(args.index, order);
+              switch(listBuyMap.get(order.price)) {
+                  case(null) {
+                      let orderSet = TrieSet.fromArray([order], Types._hashOfOrder, Types._equalOfOrder);
+                      listBuyMap.put(order.price, orderSet);
+                  };
+                  case(?orderSet) {
+                      let newOrderSet = TrieSet.put(orderSet, order, Types._hashOfOrder(order), Types._equalOfOrder);
+                      listBuyMap.put(order.price, newOrderSet);
+                  };
+              };
+              if(order.price == listBuyMax) {
+                  if(listBuyMax_Number > 0) listBuyMax_Number += 1;
+                  if(listBuyMax_Number == 0) {
+                      listBuyMax_Number := 1;
+                      listBuyMax := order.price;
+                  };
+              };
+              return #err(#TransferFrom_ToUser_Error);
+          };
+      };
   };
 
   // 添加公司信息

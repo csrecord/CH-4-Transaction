@@ -64,6 +64,7 @@ module {
         #cancel : {
             orderId: Nat;
             user: Principal;
+            direction: Direction;
         };
         #deal : {
             orderId: Nat;

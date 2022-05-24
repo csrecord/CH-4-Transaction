@@ -12,7 +12,7 @@ type Leaf<K, V> = {keyvals : AssocList__1<Key<K>, V>; size : Nat};
 type List<T> = ?(T, List<T>);
 type Operation =
   {
-    #cancel : {orderId : Nat; user : Principal};
+    #cancel : {direction : Direction; orderId : Nat; user : Principal};
     #deal :
       {
         amount : Nat;
