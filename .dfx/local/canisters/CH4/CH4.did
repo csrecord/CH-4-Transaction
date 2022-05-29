@@ -1,6 +1,8 @@
 type UpdateArgs = 
  record {
    index: nat;
+   newAmount: nat;
+   newDelta: nat;
    newPrice: nat;
  };
 type Sell = 
@@ -20,7 +22,7 @@ type Sell =
    listBuy: (ListArgs) -> (Result_1);
    listSell: (ListArgs) -> (Result_1);
    updateBuyPrice: (UpdateArgs) -> (Result);
-   updateSellPrice: (UpdateArgs) -> (Result);
+   updateSell: (UpdateArgs) -> (Result);
  };
 type Result_1 = 
  variant {
@@ -35,16 +37,16 @@ type Result =
 type ListArgs = 
  record {
    amount: nat;
+   delta: nat;
    price: nat;
  };
 type Error = 
  variant {
    Change_Old_listSellMap_Error;
-   Delete_Old_listSellMap_Error;
+   Equal_No_Need_Update;
    Insufficient_CH4;
    Insufficient_wicp;
    Invaild_index;
-   NewPrice_Equal_OldPrice;
    Order_Not_Open;
    TransferFrom_CH4_Error;
    TransferFrom_ToUser_Error;

@@ -17,8 +17,9 @@ module {
     
     public type Order = {
         index: Nat;
-        amount: Nat;
         owner: Principal;
+        var amount: Nat;
+        var delta: Nat; //接受多少差价
         var price: Nat;
         var status: OrderStatus;
         createAt: Int;
@@ -27,11 +28,14 @@ module {
     public type ListArgs = {
         amount: Nat;
         price: Nat;
+        delta: Nat;
     };
 
     public type UpdateArgs = {
         index: Nat;
+        newAmount: Nat;
         newPrice: Nat;
+        newDelta: Nat;
     };
 
     public type CancelArgs = {

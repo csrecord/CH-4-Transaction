@@ -10,18 +10,26 @@ export const idlFactory = ({ IDL }) => {
     'Insufficient_CH4' : IDL.Null,
     'Invaild_index' : IDL.Null,
     'Order_Not_Open' : IDL.Null,
-    'Delete_Old_listSellMap_Error' : IDL.Null,
     'Insufficient_wicp' : IDL.Null,
-    'NewPrice_Equal_OldPrice' : IDL.Null,
     'Unauthorized' : IDL.Null,
     'Change_Old_listSellMap_Error' : IDL.Null,
     'TransferFrom_CH4_Error' : IDL.Null,
     'TransferFrom_ToUser_Error' : IDL.Null,
     'TransferFrom_wicp_Error' : IDL.Null,
+    'Equal_No_Need_Update' : IDL.Null,
   });
   const Result_1 = IDL.Variant({ 'ok' : IDL.Nat, 'err' : Error });
-  const ListArgs = IDL.Record({ 'price' : IDL.Nat, 'amount' : IDL.Nat });
-  const UpdateArgs = IDL.Record({ 'index' : IDL.Nat, 'newPrice' : IDL.Nat });
+  const ListArgs = IDL.Record({
+    'price' : IDL.Nat,
+    'amount' : IDL.Nat,
+    'delta' : IDL.Nat,
+  });
+  const UpdateArgs = IDL.Record({
+    'newAmount' : IDL.Nat,
+    'index' : IDL.Nat,
+    'newPrice' : IDL.Nat,
+    'newDelta' : IDL.Nat,
+  });
   const Result = IDL.Variant({ 'ok' : IDL.Bool, 'err' : Error });
   const Sell = IDL.Service({
     'addCompany' : IDL.Func([Company], [IDL.Bool], []),
@@ -41,7 +49,7 @@ export const idlFactory = ({ IDL }) => {
     'listBuy' : IDL.Func([ListArgs], [Result_1], []),
     'listSell' : IDL.Func([ListArgs], [Result_1], []),
     'updateBuyPrice' : IDL.Func([UpdateArgs], [Result], []),
-    'updateSellPrice' : IDL.Func([UpdateArgs], [Result], []),
+    'updateSell' : IDL.Func([UpdateArgs], [Result], []),
   });
   return Sell;
 };
