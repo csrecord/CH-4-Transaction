@@ -1,0 +1,51 @@
+// Version: 1.0.0
+type Direction = {#Buy; #Sell};
+type OpRecord = TxRecord;
+type Operation =
+  {
+    #cancel : {direction : Direction; orderId : Nat; user : Principal};
+    #deal :
+      {
+        amount : Nat;
+        buyer : Principal;
+        orderId : Nat;
+        price : Nat;
+        seller : Principal
+      };
+    #deposit : {amount : Nat; from : Principal; to : Principal};
+    #list :
+      {
+        amount : Nat;
+        direction : Direction;
+        orderId : Nat;
+        price : Nat;
+        user : Principal
+      };
+    #withdraw : {amount : Nat; from : Principal; to : Principal}
+  };
+type OrderExt__1 =
+  {
+    createAt : Int;
+    index : Nat;
+    owner : Principal;
+    price : Nat;
+    status : OrderStatus__1;
+    token : Principal;
+    tokenIndex : Nat
+  };
+type OrderStatus = {#cancel : Nat; #done : Nat; #open : Nat};
+type OrderStatus__1 = OrderStatus;
+type TxRecord = {index : Nat; op : Operation; timestamp : Int};
+actor {
+  stable var collectionOrderEntries : [(Principal, [Nat])];
+  stable var collectionRecordEntries : [(Principal, [Nat])];
+  stable var currentOrderIndex : Nat;
+  stable var currentTxIndex : Nat;
+  stable var market_canister_id_ : Principal;
+  stable var opsAccEntries : [(Principal, [Nat])];
+  stable var orders : [OrderExt__1];
+  stable var ordersAccEntries : [(Principal, [Nat])];
+  stable var owner_ : Principal;
+  stable var records : [OpRecord];
+  stable var tokenOrderEntries : [(Text, [Nat])]
+};

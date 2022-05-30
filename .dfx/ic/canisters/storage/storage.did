@@ -1,0 +1,136 @@
+type Time = int;
+type Storage = 
+ service {
+   addOrder: (OrderExt) -> (nat);
+   addRecord: (principal, Operation__1, Time) -> (nat);
+   allHistory: () -> (vec OpRecord) query;
+   clearData: () -> (bool);
+   getCollectionHistoryOrders: (principal) -> (vec OrderExt) query;
+   getCycles: () -> (nat) query;
+   getItemHistory: (principal, int, int) -> (vec ItemInfo) query;
+   getPriceHistory: (principal, int, int) -> (vec PriceInfo) query;
+   getTokenHistoryOrders: (principal, nat) -> (vec OrderExt) query;
+   getTransaction: (nat) -> (OpRecord) query;
+   getTransactions: (nat, nat) -> (vec OpRecord) query;
+   getUserOrderAmount: (principal) -> (nat) query;
+   getUserOrders: (principal, nat, nat) -> (vec OrderExt) query;
+   getUserTransactionAmount: (principal) -> (nat) query;
+   getUserTransactions: (principal, nat, nat) -> (vec OpRecord) query;
+   marketCanisterId: () -> (principal) query;
+   opAmount: () -> (nat) query;
+   owner: () -> (principal) query;
+   setMarketCanisterId: (principal) -> (bool);
+ };
+type PriceInfo = 
+ record {
+   avg: nat;
+   date: int;
+   max: nat;
+   min: nat;
+   num: nat;
+   volume: nat;
+ };
+type OrderStatus = 
+ variant {
+   cancel: nat;
+   done: nat;
+   open: nat;
+ };
+type OrderExt = 
+ record {
+   createAt: int;
+   index: nat;
+   owner: principal;
+   price: nat;
+   status: OrderStatus;
+   token: principal;
+   tokenIndex: nat;
+ };
+type Operation__1 = 
+ variant {
+   cancel: record {
+             direction: Direction;
+             orderId: nat;
+             user: principal;
+           };
+   deal:
+    record {
+      amount: nat;
+      buyer: principal;
+      orderId: nat;
+      price: nat;
+      seller: principal;
+    };
+   deposit: record {
+              amount: nat;
+              from: principal;
+              to: principal;
+            };
+   list:
+    record {
+      amount: nat;
+      direction: Direction;
+      orderId: nat;
+      price: nat;
+      user: principal;
+    };
+   withdraw: record {
+               amount: nat;
+               from: principal;
+               to: principal;
+             };
+ };
+type Operation = 
+ variant {
+   cancel: record {
+             direction: Direction;
+             orderId: nat;
+             user: principal;
+           };
+   deal:
+    record {
+      amount: nat;
+      buyer: principal;
+      orderId: nat;
+      price: nat;
+      seller: principal;
+    };
+   deposit: record {
+              amount: nat;
+              from: principal;
+              to: principal;
+            };
+   list:
+    record {
+      amount: nat;
+      direction: Direction;
+      orderId: nat;
+      price: nat;
+      user: principal;
+    };
+   withdraw: record {
+               amount: nat;
+               from: principal;
+               to: principal;
+             };
+ };
+type OpRecord = 
+ record {
+   index: nat;
+   op: Operation;
+   timestamp: int;
+ };
+type ItemInfo = 
+ record {
+   from: principal;
+   id: nat;
+   price: nat;
+   time: int;
+   to: principal;
+ };
+type Direction = 
+ variant {
+   Buy;
+   Sell;
+ };
+service : (principal, principal) -> Storage

@@ -2,7 +2,19 @@
   "version": 1,
   "dfx": "0.9.3",
   "canisters": {
-    "CH4": {
+    "ch4": {
+      "type": "motoko",
+      "main": "src/CH4/DIP20/token.mo"
+    },
+    "cny": {
+      "type": "motoko",
+      "main": "src/CH4/DIP20/token.mo"
+    },
+    "storage": {
+      "type": "motoko",
+      "main": "src/CH4/storage.mo"
+    },
+    "market": {
       "type": "motoko",
       "main": "src/CH4/main.mo"
     }

@@ -6,21 +6,22 @@ import Time "mo:base/Time";
 import TrieMap "mo:base/TrieMap";
 import TrieSet "mo:base/TrieSet";
 import Result "mo:base/Result";
+import Iter "mo:base/Iter";
 
 import Types "types";
 
-shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Principal,storage_: Principal) = this {
+shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Principal,storage_: Principal) = this {
 
   public type Error = {
-    #Insufficient_wicp;
+    #Insufficient_cny;
     #Insufficient_CH4;
     #TransferFrom_CH4_Error;
     #Invaild_index;
     #Unauthorized;
     #Order_Not_Open;
     #Change_Old_listSellMap_Error;
-    #TransferFrom_ToUser_Error;
-    #TransferFrom_wicp_Error;
+    #Transfer_ToUser_Error;
+    #TransferFrom_cny_Error;
     #Equal_No_Need_Update;
   };
   
@@ -51,6 +52,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       totalSupply: () -> async Nat;
       transfer: shared (to: Principal, value: Nat) -> async TxReceiptToken;
       transferFrom: shared (from: Principal, to: Principal, value: Nat) -> async TxReceiptToken;
+      mint: shared (to: Principal, value: Nat) -> async TxReceiptToken;
   };
 
   type StorageActor = actor {
@@ -65,9 +67,9 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
   type ListArgs = Types.ListArgs;
   type UpdateArgs = Types.UpdateArgs;
   type CancelArgs = Types.CancelArgs;
-  private stable var wicp: TokenActor = actor(Principal.toText(wicp_));
-  private stable var ch4: TokenActor = actor(Principal.toText(ch4_));
-  private stable var storage: StorageActor = actor(Principal.toText(storage_));
+  private stable let cny: TokenActor = actor(Principal.toText(cny_));
+  private stable let ch4: TokenActor = actor(Principal.toText(ch4_));
+  private stable let storage: StorageActor = actor(Principal.toText(storage_));
   stable var sells_entries: [(Nat, Order)] = [];
   stable var buys_entries: [(Nat, Order)] = [];
   stable var companys_entries: [(Principal, Company)] = [];
@@ -124,9 +126,9 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       if(order.price == args.newPrice and order.delta == args.newDelta and order.amount == args.newAmount)
           {return #err(#Equal_No_Need_Update);};
       if(args.newAmount < order.amount) {
-          switch(await ch4.transferFrom(Principal.fromActor(this), caller, (order.amount - args.newAmount))) {
+          switch(await ch4.transfer(caller, (order.amount - args.newAmount))) {
               case(#Ok(id)) {};
-              case(#Err(e)) { return #err(#TransferFrom_ToUser_Error);};
+              case(#Err(e)) { return #err(#Transfer_ToUser_Error);};
           };
       } else if(args.newAmount > order.amount) {
           switch(await ch4.transferFrom(caller, Principal.fromActor(this), (args.newAmount - order.amount))) {
@@ -154,7 +156,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       };
       if(caller != order.owner) return #err(#Unauthorized);
       sells.delete(args.index);
-      switch(await ch4.transferFrom(Principal.fromActor(this), caller, order.amount)) {
+      switch(await ch4.transfer(caller, order.amount)) {
           case(#Ok(id)) {
               txcounter += 1;
               order.status := #cancel(txcounter);
@@ -164,20 +166,9 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
           };
           case(#Err(e)) {
               sells.put(args.index, order);
-              return #err(#TransferFrom_ToUser_Error);
+              return #err(#Transfer_ToUser_Error);
           };
       };
-  };
-
-  private func _toOrderExt(order: Order): OrderExt {
-      {
-          index = order.index;
-          amount = order.amount;
-          owner = order.owner;
-          price = order.price;
-          status = order.status;
-          createAt = order.createAt;
-      }
   };
 
   // 限价挂买入单
@@ -188,12 +179,12 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
   public shared({caller}) func listBuy(
       args: ListArgs
   ): async Result.Result<Nat, Error> {
-      let balance = await wicp.balanceOf(caller);
+      let balance = await cny.balanceOf(caller);
       let needBalance = args.amount * (args.price + args.delta);
-      if(balance < needBalance) { return #err(#Insufficient_wicp);};
-      switch(await wicp.transferFrom(caller, Principal.fromActor(this), needBalance)) {
+      if(balance < needBalance) { return #err(#Insufficient_cny);};
+      switch(await cny.transferFrom(caller, Principal.fromActor(this), needBalance)) {
           case(#Ok(id)) {};
-          case(#Err(e)) { return #err(#TransferFrom_wicp_Error);};
+          case(#Err(e)) { return #err(#TransferFrom_cny_Error);};
       }; 
       listBuyIndex += 1;
       txcounter += 1;
@@ -211,7 +202,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       return #ok(order.index);
   };
 
-  public shared({caller}) func updateBuyPrice(
+  public shared({caller}) func updateBuy(
       args: UpdateArgs
   ): async Result.Result<Bool, Error> {
       let order = switch(buys.get(args.index)) {
@@ -228,14 +219,14 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       let newNeedBalance = args.newAmount * (args.newPrice + args.newDelta);
       let balance = order.amount * (order.price + order.delta);
       if(newNeedBalance < balance) {
-          switch(await wicp.transferFrom(Principal.fromActor(this), caller, (balance - newNeedBalance))) {
+          switch(await cny.transfer(caller, (balance - newNeedBalance))) {
             case(#Ok(id)) {};
-            case(#Err(e)) { return #err(#TransferFrom_ToUser_Error);};
+            case(#Err(e)) { return #err(#Transfer_ToUser_Error);};
           };  
       } else if(newNeedBalance > balance) {
-          switch(await wicp.transferFrom(caller, Principal.fromActor(this), (newNeedBalance - balance))) {
+          switch(await cny.transferFrom(caller, Principal.fromActor(this), (newNeedBalance - balance))) {
               case(#Ok(id)) {};
-              case(#Err(e)) { return #err(#TransferFrom_wicp_Error);};
+              case(#Err(e)) { return #err(#TransferFrom_cny_Error);};
           };
       };
       order.amount := args.newAmount;
@@ -259,7 +250,7 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
       if(caller != order.owner) return #err(#Unauthorized);
       buys.delete(args.index);
       let needBalance = order.amount * (order.price + order.delta);
-      switch(await wicp.transferFrom(Principal.fromActor(this), caller, needBalance)) {
+      switch(await cny.transfer(caller, needBalance)) {
           case(#Ok(id)) {
               txcounter += 1;
               order.status := #cancel(txcounter);
@@ -269,11 +260,49 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
           };
           case(#Err(e)) {
               buys.put(args.index, order);
-              return #err(#TransferFrom_ToUser_Error);
+              return #err(#Transfer_ToUser_Error);
           };
       };
   };
 
+  public query({caller}) func getSellList(): async [OrderExt] {
+      let pre_ans= (Iter.toArray(sells.vals()));
+      let ans = Array.init<OrderExt>(pre_ans.size(), {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });
+      var i = 0;
+      for(x in pre_ans.vals()) {
+          ans[i] := _toOrderExt(pre_ans[i]);
+          i += 1;
+      };
+      Array.freeze<OrderExt>(ans)
+  };
+
+  public query({caller}) func getBuyList(): async [OrderExt] {
+      let pre_ans= (Iter.toArray(buys.vals()));
+      let ans = Array.init<OrderExt>(pre_ans.size(), {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });
+      var i = 0;
+      for(x in pre_ans.vals()) {
+          ans[i] := _toOrderExt(pre_ans[i]);
+          i += 1;
+      };
+      Array.freeze<OrderExt>(ans)
+  };
+  
   // 添加公司信息
   public shared({caller}) func addCompany(company: Company): async Bool{
       companys.put(caller, company);
@@ -282,50 +311,62 @@ shared(installer) actor class Sell(admin_ : Principal,wicp_: Principal,ch4_: Pri
 
   // 撮合交易
   public shared({caller}) func deal(): async () {
+    //   let sellArray = Array.thaw(Array.sort(Iter.toArray(sells.vals()), Types.orderCompare));
+    //   let buyArray = Array.thaw(Array.sort(Iter.toArray(buys.vals()), Types.orderCompare));
+    //   var i1 = buyArray.size() - 1;
+    //   var i2 = 0;
+    //   label l1 loop {
+    //       i2 := 0;
+    //       for(x in sellArray.vals()) {
+    //           if(buyArray[i1].price > x.price) {
 
+    //           }
+    //       }
+    //   }
+  };
+  
+  private func _toOrderExt(order: Order): OrderExt {
+      {
+          index = order.index;
+          amount = order.amount;
+          owner = order.owner;
+          price = order.price;
+          delta = order.delta;
+          status = order.status;
+          createAt = order.createAt;
+      }
   };
 
-//   // deposit WICP to canister
-//   public shared(msg) func deposit(amount: Nat): async TxReceipt {
-//       switch(await wicp.transferFrom(msg.caller, Principal.fromActor(this), amount)) {
-//           case(#Ok(id)) { };
-//           case(#Err(e)) { return #err("deposit fail"); };
-//       };
-//       let bal = _balanceOf(msg.caller);
-//       balances.put(msg.caller, bal + amount);
-//       ignore storage.addRecord(msg.caller, #deposit({from = msg.caller; to = Principal.fromActor(this); amount = amount}), Time.now());
-//       txcounter += 1;
-//       return #ok(txcounter - 1);
-//   };
-
-//   // withdraw WICP from canister
-//   public shared(msg) func withdraw(amount: Nat): async TxReceipt {
-//       let bal = _balanceOf(msg.caller);
-//       if (bal < amount)
-//           return #err("insufficient balance");
-//       balances.put(msg.caller, bal - amount);
-//       switch(await wicp.transfer(msg.caller, amount - wicpFee)) {
-//           case(#Ok(id)) { 
-//               // msg.caller == this canister
-//               ignore storage.addRecord(msg.caller, #withdraw({from = Principal.fromActor(this); to = msg.caller; amount = amount}), Time.now());
-//               txcounter += 1;
-//               return #ok(txcounter - 1);
-//           };
-//           case(#Err(e)) {
-//               // transfer fail, restore user balance
-//               balances.put(msg.caller, bal);
-//               return #err("withdraw fail");
-//           };
+//   public shared({caller}) func mintCh4(to: Principal,value: Nat): async Bool{
+//       switch(await ch4.mint(to, value)) {
+//           case(#Ok(txid)) { true};
+//           case(#Err(err)) { false};
 //       };
 //   };
   
-  // 返回[(价格， 数量)] 
-  public query({caller}) func getSellList(): async [(Nat, Nat)] {
-      [(0,0)]
-  };
+//   public shared({caller}) func burnCh4(who: Principal,amount: Nat): async Result.Result<Bool, Error> {
+//       let balance = await ch4.balanceOf(caller);
+//       if(balance < amount) { return #err(#Insufficient_CH4);};
+//       switch(await ch4.transferFrom(caller, Principal.fromActor(this), amount)) {
+//           case(#Ok(id)) { return #ok(true);};
+//           case(#Err(e)) { return #err(#TransferFrom_CH4_Error);};
+//       }; 
+//   };
+  
+//   public shared({caller}) func ch4BalanceOf(who: Principal): async Nat {
+//       let balance = await ch4.balanceOf(who);
+//       balance
+//   };
 
-  public query({caller}) func getBuyList(): async [(Nat, Nat)] {
-      [(0,0)]
-  };
+//   public shared({caller}) func cnyBalanceOf(who: Principal): async Nat {
+//       await cny.balanceOf(who)
+//   };
+
+//   public shared({caller}) func mintcny(to: Principal,value: Nat): async Bool{
+//       switch(await cny.mint(to, value)) {
+//           case(#Ok(txid)) { true};
+//           case(#Err(err)) { false};
+//       };
+//   };
 
 }

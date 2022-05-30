@@ -1,0 +1,105 @@
+// Version: 1.0.0
+type Company =
+  {desc : Text; name : Text; principal : Principal; webLink : Text};
+type Company__1 = Company;
+type Direction = {#Buy; #Sell};
+type Operation =
+  {
+    #cancel : {direction : Direction; orderId : Nat; user : Principal};
+    #deal :
+      {
+        amount : Nat;
+        buyer : Principal;
+        orderId : Nat;
+        price : Nat;
+        seller : Principal
+      };
+    #deposit : {amount : Nat; from : Principal; to : Principal};
+    #list :
+      {
+        amount : Nat;
+        direction : Direction;
+        orderId : Nat;
+        price : Nat;
+        user : Principal
+      };
+    #withdraw : {amount : Nat; from : Principal; to : Principal}
+  };
+type Operation__1 = Operation;
+type OrderExt =
+  {
+    amount : Nat;
+    createAt : Int;
+    delta : Nat;
+    index : Nat;
+    owner : Principal;
+    price : Nat;
+    status : OrderStatus
+  };
+type OrderExt__1 = OrderExt;
+type OrderStatus = {#cancel : Nat; #done : Nat; #open : Nat};
+type Order__1 =
+  {
+    var amount : Nat;
+    createAt : Int;
+    var delta : Nat;
+    index : Nat;
+    owner : Principal;
+    var price : Nat;
+    var status : OrderStatus
+  };
+type Order__2 = Order__1;
+type Time = Int;
+type TokenError =
+  {
+    #AmountTooSmall;
+    #BlockUsed;
+    #ErrorOperationStyle;
+    #ErrorTo;
+    #InsufficientAllowance;
+    #InsufficientBalance;
+    #LedgerTrap;
+    #Other
+  };
+type TxReceiptToken = {#Err : TokenError; #Ok : Nat};
+actor {
+  stable var buys_entries : [(Nat, Order__2)];
+  stable ch4 :
+    actor {
+      allowance : shared (Principal, Principal) -> async Nat;
+      approve : shared (Principal, Nat) -> async TxReceiptToken;
+      balanceOf : shared Principal -> async Nat;
+      decimals : shared () -> async Nat8;
+      mint : shared (Principal, Nat) -> async TxReceiptToken;
+      name : shared () -> async Text;
+      symbol : shared () -> async Text;
+      totalSupply : shared () -> async Nat;
+      transfer : shared (Principal, Nat) -> async TxReceiptToken;
+      transferFrom :
+        shared (Principal, Principal, Nat) -> async TxReceiptToken
+    };
+  stable cny :
+    actor {
+      allowance : shared (Principal, Principal) -> async Nat;
+      approve : shared (Principal, Nat) -> async TxReceiptToken;
+      balanceOf : shared Principal -> async Nat;
+      decimals : shared () -> async Nat8;
+      mint : shared (Principal, Nat) -> async TxReceiptToken;
+      name : shared () -> async Text;
+      symbol : shared () -> async Text;
+      totalSupply : shared () -> async Nat;
+      transfer : shared (Principal, Nat) -> async TxReceiptToken;
+      transferFrom :
+        shared (Principal, Principal, Nat) -> async TxReceiptToken
+    };
+  stable var companys_entries : [(Principal, Company__1)];
+  stable var listBuyIndex : Nat;
+  stable var listSellIndex : Nat;
+  stable var sells_entries : [(Nat, Order__2)];
+  stable storage :
+    actor {
+      addOrder : shared OrderExt__1 -> async Nat;
+      addRecord : shared (Principal, Operation__1, Time) -> async Nat
+    };
+  stable var txcounter : Nat
+};

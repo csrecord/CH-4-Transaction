@@ -25,6 +25,31 @@ module {
         createAt: Int;
     };
 
+    public type OrderExt = {
+        index: Nat;
+        owner: Principal;
+        amount: Nat;
+        delta: Nat; //接受多少差价
+        price: Nat;
+        status: OrderStatus;
+        createAt: Int;
+    };
+
+    public type PriceInfo = {
+        date: Int;
+        avg: Nat;
+        volume: Nat;
+        num: Nat;
+        min: Nat;
+        max: Nat;
+    };
+    public type ItemInfo = {
+        id: Nat;
+        price: Nat;
+        from: Principal;
+        to: Principal;
+        time: Int;
+    };
     public type ListArgs = {
         amount: Nat;
         price: Nat;
@@ -79,14 +104,13 @@ module {
         };
     };
 
-    public type OrderExt = {
+    public type TxRecord = {
         index: Nat;
-        amount: Nat;
-        owner: Principal;
-        price: Nat; // can edit price after listing
-        status: OrderStatus; // upadte to #done after order execution
-        createAt: Int;
+        op: Operation;
+        timestamp: Int;
     };
+    
+
 
     public func _hashOfOrder(
         order: Order
@@ -99,5 +123,23 @@ module {
     ): Bool{
         a.index == b.index and a.price == b.price
     };
+
+    // public type Order = {
+    //     index: Nat;
+    //     owner: Principal;
+    //     var amount: Nat;
+    //     var delta: Nat; //接受多少差价
+    //     var price: Nat;
+    //     var status: OrderStatus;
+    //     createAt: Int;
+    // };
+
+    public func orderCompare(x: Order, y: Order) : {#less; #equal; #greater} {
+        if(x.price < y.price) { #less }
+        else if(x.price == y.price) { #equal }
+        else { #greater}
+    };
+
+    
 };    
 
