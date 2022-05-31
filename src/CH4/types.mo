@@ -25,6 +25,17 @@ module {
         createAt: Int;
     };
 
+    public type DealOrder = {
+        buyer: Principal;
+        seller: Principal;
+        sellOrderIndex: Nat;
+        buyOrderIndex: Nat;
+        amount: Nat;
+        price: Nat;
+        sum: Nat;
+        dealTime: Int;
+    };
+
     public type OrderExt = {
         index: Nat;
         owner: Principal;
@@ -124,6 +135,18 @@ module {
         a.index == b.index and a.price == b.price
     };
 
+    public func _hashOfDealOrder(
+        order: DealOrder
+    ): Hash.Hash{
+        Hash.hash(order.sellOrderIndex)
+    };
+
+    public func _equalOfDealOrder(
+        a: DealOrder,b: DealOrder
+    ): Bool{
+        a.sellOrderIndex == b.sellOrderIndex and a.buyOrderIndex == b.buyOrderIndex
+    };
+    
     // public type Order = {
     //     index: Nat;
     //     owner: Principal;

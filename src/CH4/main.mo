@@ -23,6 +23,15 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
     #Transfer_ToUser_Error;
     #TransferFrom_cny_Error;
     #Equal_No_Need_Update;
+    //
+    #InsufficientBalance;
+    #InsufficientAllowance;
+    #LedgerTrap;
+    #AmountTooSmall;
+    #BlockUsed;
+    #ErrorOperationStyle;
+    #ErrorTo;
+    #Other;
   };
   
   // DIP20 token actor
@@ -59,6 +68,11 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       addRecord: shared (caller: Principal, op: Operation, timestamp: Time.Time) -> async Nat;
       addOrder:  shared (order: OrderExt) -> async Nat;
   };
+
+  type MarketActor = actor {
+      deal: shared() -> async ();
+  };
+
   type TxReceipt = Result.Result<Nat, Text>;
   type Operation = Types.Operation;
   type OrderExt = Types.OrderExt;
@@ -67,6 +81,7 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   type ListArgs = Types.ListArgs;
   type UpdateArgs = Types.UpdateArgs;
   type CancelArgs = Types.CancelArgs;
+  type DealOrder = Types.DealOrder;
   private stable let cny: TokenActor = actor(Principal.toText(cny_));
   private stable let ch4: TokenActor = actor(Principal.toText(ch4_));
   private stable let storage: StorageActor = actor(Principal.toText(storage_));
@@ -79,6 +94,7 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   var sells: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(sells_entries.vals(), Nat.equal, Hash.hash);
   var buys: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(buys_entries.vals(), Nat.equal, Hash.hash);
   var companys: TrieMap.TrieMap<Principal, Company> = TrieMap.fromEntries<Principal, Company>(companys_entries.vals(), Principal.equal, Principal.hash);
+  var deals = TrieSet.empty<DealOrder>();
 
   // 挂出售单 价格 与 接受价格下调幅度
   // 在ch4 canister查询余额够不够，不够就#Insufficient_CH4
@@ -184,7 +200,7 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       if(balance < needBalance) { return #err(#Insufficient_cny);};
       switch(await cny.transferFrom(caller, Principal.fromActor(this), needBalance)) {
           case(#Ok(id)) {};
-          case(#Err(e)) { return #err(#TransferFrom_cny_Error);};
+          case(#Err(e)) { return #err(e);};
       }; 
       listBuyIndex += 1;
       txcounter += 1;
@@ -309,6 +325,7 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       true
   };
 
+
   // 撮合交易
   public shared({caller}) func deal(): async () {
     //   let sellArray = Array.thaw(Array.sort(Iter.toArray(sells.vals()), Types.orderCompare));
@@ -323,8 +340,44 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
     //           }
     //       }
     //   }
+    if(sells.size() > 0 and buys.size() > 0) {
+        let sellArray = Iter.toArray(sells.vals());
+        let buyArray = Iter.toArray(buys.vals());
+      switch(await cny.transfer(sellArray[0].owner, sellArray[0].amount * sellArray[0].price)) {
+          case(#Ok(id)) {
+              switch(await ch4.transfer(buyArray[0].owner, buyArray[0].amount)) {
+                  case(#Ok(id)) {
+                      let dealOrder = {
+                          buyer = buyArray[0].owner;
+                          seller = sellArray[0].owner;
+                          sellOrderIndex = sellArray[0].index;
+                          buyOrderIndex = buyArray[0].index;
+                          amount = sellArray[0].amount;
+                          price = sellArray[0].price;
+                          sum = sellArray[0].amount * sellArray[0].price;
+                          dealTime = Time.now();
+                      };
+                      deals := TrieSet.put(deals, dealOrder, Types._hashOfDealOrder(dealOrder), Types._equalOfDealOrder);
+                      sells.delete(sellArray[0].index);
+                      buys.delete(buyArray[0].index);
+                  };
+                  case(#Err(e)) {};
+              }
+          };
+          case(#Err(e)) {};
+      };
+    }
   };
-  
+
+  public query({caller}) func getDeals(): async [DealOrder] {
+      TrieSet.toArray(deals)
+  };
+
+    system func heartbeat() : async () {
+        let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
+        await marketActor.deal();
+    };
+
   private func _toOrderExt(order: Order): OrderExt {
       {
           index = order.index;

@@ -10,13 +10,21 @@ export const idlFactory = ({ IDL }) => {
     'Insufficient_CH4' : IDL.Null,
     'Insufficient_cny' : IDL.Null,
     'Invaild_index' : IDL.Null,
+    'InsufficientAllowance' : IDL.Null,
     'Order_Not_Open' : IDL.Null,
+    'InsufficientBalance' : IDL.Null,
     'Transfer_ToUser_Error' : IDL.Null,
+    'ErrorOperationStyle' : IDL.Null,
     'Unauthorized' : IDL.Null,
+    'LedgerTrap' : IDL.Null,
     'Change_Old_listSellMap_Error' : IDL.Null,
     'TransferFrom_CH4_Error' : IDL.Null,
     'TransferFrom_cny_Error' : IDL.Null,
+    'ErrorTo' : IDL.Null,
+    'Other' : IDL.Null,
+    'BlockUsed' : IDL.Null,
     'Equal_No_Need_Update' : IDL.Null,
+    'AmountTooSmall' : IDL.Null,
   });
   const Result_1 = IDL.Variant({ 'ok' : IDL.Nat, 'err' : Error });
   const OrderStatus = IDL.Variant({
@@ -32,6 +40,16 @@ export const idlFactory = ({ IDL }) => {
     'price' : IDL.Nat,
     'amount' : IDL.Nat,
     'delta' : IDL.Nat,
+  });
+  const DealOrder = IDL.Record({
+    'sum' : IDL.Nat,
+    'seller' : IDL.Principal,
+    'buyOrderIndex' : IDL.Nat,
+    'buyer' : IDL.Principal,
+    'price' : IDL.Nat,
+    'amount' : IDL.Nat,
+    'dealTime' : IDL.Int,
+    'sellOrderIndex' : IDL.Nat,
   });
   const ListArgs = IDL.Record({
     'price' : IDL.Nat,
@@ -51,6 +69,7 @@ export const idlFactory = ({ IDL }) => {
     'cancelSell' : IDL.Func([CancelArgs], [Result_1], []),
     'deal' : IDL.Func([], [], []),
     'getBuyList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
+    'getDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
     'getSellList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
     'listBuy' : IDL.Func([ListArgs], [Result_1], []),
     'listSell' : IDL.Func([ListArgs], [Result_1], []),

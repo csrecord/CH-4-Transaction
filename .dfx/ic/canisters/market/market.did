@@ -8,19 +8,14 @@ type UpdateArgs =
 type Sell = 
  service {
    addCompany: (Company) -> (bool);
-   burnCh4: (principal, nat) -> (Result);
    cancelBuy: (CancelArgs) -> (Result_1);
    cancelSell: (CancelArgs) -> (Result_1);
-   ch4BalanceOf: (principal) -> (nat);
-   cnyBalanceOf: (principal) -> (nat);
    deal: () -> ();
    getBuyList: () -> (vec OrderExt) query;
-   getPrincipal: () -> (principal) query;
+   getDeals: () -> (vec DealOrder) query;
    getSellList: () -> (vec OrderExt) query;
    listBuy: (ListArgs) -> (Result_1);
    listSell: (ListArgs) -> (Result_1);
-   mintCh4: (principal, nat) -> (bool);
-   mintcny: (principal, nat) -> (bool);
    updateBuy: (UpdateArgs) -> (Result);
    updateSell: (UpdateArgs) -> (Result);
  };
@@ -58,16 +53,35 @@ type ListArgs =
  };
 type Error = 
  variant {
+   AmountTooSmall;
+   BlockUsed;
    Change_Old_listSellMap_Error;
    Equal_No_Need_Update;
+   ErrorOperationStyle;
+   ErrorTo;
+   InsufficientAllowance;
+   InsufficientBalance;
    Insufficient_CH4;
    Insufficient_cny;
    Invaild_index;
+   LedgerTrap;
    Order_Not_Open;
+   Other;
    TransferFrom_CH4_Error;
    TransferFrom_cny_Error;
    Transfer_ToUser_Error;
    Unauthorized;
+ };
+type DealOrder = 
+ record {
+   amount: nat;
+   buyOrderIndex: nat;
+   buyer: principal;
+   dealTime: int;
+   price: nat;
+   sellOrderIndex: nat;
+   seller: principal;
+   sum: nat;
  };
 type Company = 
  record {

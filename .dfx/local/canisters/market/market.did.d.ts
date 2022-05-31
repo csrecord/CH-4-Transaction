@@ -6,16 +6,34 @@ export interface Company {
   'name' : string,
   'webLink' : string,
 }
+export interface DealOrder {
+  'sum' : bigint,
+  'seller' : Principal,
+  'buyOrderIndex' : bigint,
+  'buyer' : Principal,
+  'price' : bigint,
+  'amount' : bigint,
+  'dealTime' : bigint,
+  'sellOrderIndex' : bigint,
+}
 export type Error = { 'Insufficient_CH4' : null } |
   { 'Insufficient_cny' : null } |
   { 'Invaild_index' : null } |
+  { 'InsufficientAllowance' : null } |
   { 'Order_Not_Open' : null } |
+  { 'InsufficientBalance' : null } |
   { 'Transfer_ToUser_Error' : null } |
+  { 'ErrorOperationStyle' : null } |
   { 'Unauthorized' : null } |
+  { 'LedgerTrap' : null } |
   { 'Change_Old_listSellMap_Error' : null } |
   { 'TransferFrom_CH4_Error' : null } |
   { 'TransferFrom_cny_Error' : null } |
-  { 'Equal_No_Need_Update' : null };
+  { 'ErrorTo' : null } |
+  { 'Other' : null } |
+  { 'BlockUsed' : null } |
+  { 'Equal_No_Need_Update' : null } |
+  { 'AmountTooSmall' : null };
 export interface ListArgs {
   'price' : bigint,
   'amount' : bigint,
@@ -43,6 +61,7 @@ export interface Sell {
   'cancelSell' : (arg_0: CancelArgs) => Promise<Result_1>,
   'deal' : () => Promise<undefined>,
   'getBuyList' : () => Promise<Array<OrderExt>>,
+  'getDeals' : () => Promise<Array<DealOrder>>,
   'getSellList' : () => Promise<Array<OrderExt>>,
   'listBuy' : (arg_0: ListArgs) => Promise<Result_1>,
   'listSell' : (arg_0: ListArgs) => Promise<Result_1>,
