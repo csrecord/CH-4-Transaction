@@ -63,6 +63,8 @@ export interface Sell {
   'getBuyList' : () => Promise<Array<OrderExt>>,
   'getDeals' : () => Promise<Array<DealOrder>>,
   'getSellList' : () => Promise<Array<OrderExt>>,
+  'getSomebodyBuyList' : (arg_0: Principal) => Promise<Array<OrderExt>>,
+  'getSomebodySellList' : (arg_0: Principal) => Promise<Array<OrderExt>>,
   'listBuy' : (arg_0: ListArgs) => Promise<Result_1>,
   'listSell' : (arg_0: ListArgs) => Promise<Result_1>,
   'updateBuy' : (arg_0: UpdateArgs) => Promise<Result>,

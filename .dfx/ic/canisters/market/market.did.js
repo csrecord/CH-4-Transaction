@@ -71,6 +71,16 @@ export const idlFactory = ({ IDL }) => {
     'getBuyList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
     'getDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
     'getSellList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
+    'getSomebodyBuyList' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(OrderExt)],
+        ['query'],
+      ),
+    'getSomebodySellList' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(OrderExt)],
+        ['query'],
+      ),
     'listBuy' : IDL.Func([ListArgs], [Result_1], []),
     'listSell' : IDL.Func([ListArgs], [Result_1], []),
     'updateBuy' : IDL.Func([UpdateArgs], [Result], []),

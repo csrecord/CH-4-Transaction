@@ -61,9 +61,11 @@ type Error =
 type DealOrder = 
  record {
    amount: nat;
+   buyOrderIndex: nat;
    buyer: principal;
    dealTime: int;
    price: nat;
+   sellOrderIndex: nat;
    seller: principal;
    sum: nat;
  };
@@ -80,7 +82,6 @@ service : {
   cancelBuy: (CancelArgs) -> (Result_1);
   cancelSell: (CancelArgs) -> (Result_1);
   deal: () -> ();
-  doDeal: () -> (text);
   getBuyList: () -> (vec OrderExt) query;
   getDeals: () -> (vec DealOrder) query;
   getSellList: () -> (vec OrderExt) query;

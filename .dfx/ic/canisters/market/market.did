@@ -14,6 +14,8 @@ type Sell =
    getBuyList: () -> (vec OrderExt) query;
    getDeals: () -> (vec DealOrder) query;
    getSellList: () -> (vec OrderExt) query;
+   getSomebodyBuyList: (principal) -> (vec OrderExt) query;
+   getSomebodySellList: (principal) -> (vec OrderExt) query;
    listBuy: (ListArgs) -> (Result_1);
    listSell: (ListArgs) -> (Result_1);
    updateBuy: (UpdateArgs) -> (Result);

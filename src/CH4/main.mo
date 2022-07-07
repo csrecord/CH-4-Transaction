@@ -294,7 +294,7 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       });
       var i = 0;
       for(x in pre_ans.vals()) {
-          ans[i] := _toOrderExt(pre_ans[i]);
+          ans[i] := _toOrderExt(x);
           i += 1;
       };
       Array.freeze<OrderExt>(ans)
@@ -313,10 +313,80 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       });
       var i = 0;
       for(x in pre_ans.vals()) {
-          ans[i] := _toOrderExt(pre_ans[i]);
+          ans[i] := _toOrderExt(x);
           i += 1;
       };
       Array.freeze<OrderExt>(ans)
+  };
+  
+  public query({caller}) func getSomebodySellList(user: Principal): async [OrderExt] {
+      let pre_ans= (Iter.toArray(sells.vals()));
+      let _ans = Array.init<OrderExt>(pre_ans.size(), {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });
+      var i = 0;
+      for(x in pre_ans.vals()) {
+          if(x.owner == user) {
+            _ans[i] := _toOrderExt(x);
+            i += 1;
+          };
+      };
+      let ans = Array.init<OrderExt>(i+1, {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });      
+      i := 0;
+      for(x in _ans.vals()) {
+         ans[i] := x;
+         i += 1;
+      };      
+      Array.freeze<OrderExt>(ans)    
+  };
+
+  public query({caller}) func getSomebodyBuyList(user: Principal): async [OrderExt] {
+      let pre_ans= (Iter.toArray(buys.vals()));
+      let _ans = Array.init<OrderExt>(pre_ans.size(), {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });
+      var i = 0;
+      for(x in pre_ans.vals()) {
+          if(x.owner == user) {
+            _ans[i] := _toOrderExt(x);
+            i += 1;
+          };
+      };
+      let ans = Array.init<OrderExt>(i+1, {
+          index = 0;
+          owner = Principal.fromText("aaaaa-aa");
+          amount = 0;
+          delta = 0;
+          price = 0;
+          status = #open(0);
+          createAt = 0;
+      });      
+      i := 0;
+      for(x in _ans.vals()) {
+         ans[i] := x;
+         i += 1;
+      };      
+      Array.freeze<OrderExt>(ans)    
   };
   
   // 添加公司信息
