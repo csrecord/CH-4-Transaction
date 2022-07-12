@@ -54,6 +54,7 @@ module {
         min: Nat;
         max: Nat;
     };
+
     public type ItemInfo = {
         id: Nat;
         price: Nat;
@@ -61,6 +62,7 @@ module {
         to: Principal;
         time: Int;
     };
+
     public type ListArgs = {
         amount: Nat;
         price: Nat;
@@ -121,8 +123,6 @@ module {
         timestamp: Int;
     };
     
-
-
     public func _hashOfOrder(
         order: Order
     ): Hash.Hash{
@@ -147,22 +147,15 @@ module {
         a.sellOrderIndex == b.sellOrderIndex and a.buyOrderIndex == b.buyOrderIndex
     };
     
-    // public type Order = {
-    //     index: Nat;
-    //     owner: Principal;
-    //     var amount: Nat;
-    //     var delta: Nat; //接受多少差价
-    //     var price: Nat;
-    //     var status: OrderStatus;
-    //     createAt: Int;
-    // };
-
     public func orderCompare(x: Order, y: Order) : {#less; #equal; #greater} {
         if(x.price < y.price) { #less }
-        else if(x.price == y.price) { #equal }
+        else if(x.price == y.price) {
+            if(x.createAt < y.createAt) { #less }
+            else if(x.createAt == y.createAt) { #equal }
+            else { #greater}
+        }
         else { #greater}
     };
-
     
 };    
 

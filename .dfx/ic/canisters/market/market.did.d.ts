@@ -57,11 +57,13 @@ export type Result_1 = { 'ok' : bigint } |
   { 'err' : Error };
 export interface Sell {
   'addCompany' : (arg_0: Company) => Promise<boolean>,
+  'addDeals' : (arg_0: DealOrder) => Promise<boolean>,
   'cancelBuy' : (arg_0: CancelArgs) => Promise<Result_1>,
   'cancelSell' : (arg_0: CancelArgs) => Promise<Result_1>,
   'deal' : () => Promise<undefined>,
   'getBuyList' : () => Promise<Array<OrderExt>>,
   'getDeals' : () => Promise<Array<DealOrder>>,
+  'getRecentMonthDeals' : () => Promise<Array<DealOrder>>,
   'getSellList' : () => Promise<Array<OrderExt>>,
   'getSomebodyBuyList' : (arg_0: Principal) => Promise<Array<OrderExt>>,
   'getSomebodySellList' : (arg_0: Principal) => Promise<Array<OrderExt>>,

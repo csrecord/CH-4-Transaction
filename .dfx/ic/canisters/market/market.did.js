@@ -5,6 +5,16 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'webLink' : IDL.Text,
   });
+  const DealOrder = IDL.Record({
+    'sum' : IDL.Nat,
+    'seller' : IDL.Principal,
+    'buyOrderIndex' : IDL.Nat,
+    'buyer' : IDL.Principal,
+    'price' : IDL.Nat,
+    'amount' : IDL.Nat,
+    'dealTime' : IDL.Int,
+    'sellOrderIndex' : IDL.Nat,
+  });
   const CancelArgs = IDL.Record({ 'index' : IDL.Nat });
   const Error = IDL.Variant({
     'Insufficient_CH4' : IDL.Null,
@@ -41,16 +51,6 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
     'delta' : IDL.Nat,
   });
-  const DealOrder = IDL.Record({
-    'sum' : IDL.Nat,
-    'seller' : IDL.Principal,
-    'buyOrderIndex' : IDL.Nat,
-    'buyer' : IDL.Principal,
-    'price' : IDL.Nat,
-    'amount' : IDL.Nat,
-    'dealTime' : IDL.Int,
-    'sellOrderIndex' : IDL.Nat,
-  });
   const ListArgs = IDL.Record({
     'price' : IDL.Nat,
     'amount' : IDL.Nat,
@@ -65,11 +65,13 @@ export const idlFactory = ({ IDL }) => {
   const Result = IDL.Variant({ 'ok' : IDL.Bool, 'err' : Error });
   const Sell = IDL.Service({
     'addCompany' : IDL.Func([Company], [IDL.Bool], []),
+    'addDeals' : IDL.Func([DealOrder], [IDL.Bool], []),
     'cancelBuy' : IDL.Func([CancelArgs], [Result_1], []),
     'cancelSell' : IDL.Func([CancelArgs], [Result_1], []),
     'deal' : IDL.Func([], [], []),
     'getBuyList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
     'getDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
+    'getRecentMonthDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
     'getSellList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
     'getSomebodyBuyList' : IDL.Func(
         [IDL.Principal],

@@ -396,51 +396,132 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   };
 
 
+    // public type Order = {
+    //     index: Nat;
+    //     owner: Principal;
+    //     var amount: Nat;
+    //     var delta: Nat; //接受多少差价
+    //     var price: Nat 
+    //     var status: OrderStatus;
+    //     createAt: Int;
+    // };
+
   // 撮合交易
   public shared({caller}) func deal(): async () {
-    //   let sellArray = Array.thaw(Array.sort(Iter.toArray(sells.vals()), Types.orderCompare));
-    //   let buyArray = Array.thaw(Array.sort(Iter.toArray(buys.vals()), Types.orderCompare));
-    //   var i1 = buyArray.size() - 1;
-    //   var i2 = 0;
-    //   label l1 loop {
-    //       i2 := 0;
-    //       for(x in sellArray.vals()) {
-    //           if(buyArray[i1].price > x.price) {
-
-    //           }
-    //       }
-    //   }
-    if(sells.size() > 0 and buys.size() > 0) {
-        let sellArray = Iter.toArray(sells.vals());
-        let buyArray = Iter.toArray(buys.vals());
-      switch(await cny.transfer(sellArray[0].owner, sellArray[0].amount * sellArray[0].price)) {
-          case(#Ok(id)) {
-              switch(await ch4.transfer(buyArray[0].owner, buyArray[0].amount)) {
-                  case(#Ok(id)) {
-                      let dealOrder = {
-                          buyer = buyArray[0].owner;
-                          seller = sellArray[0].owner;
-                          sellOrderIndex = sellArray[0].index;
-                          buyOrderIndex = buyArray[0].index;
-                          amount = sellArray[0].amount;
-                          price = sellArray[0].price;
-                          sum = sellArray[0].amount * sellArray[0].price;
-                          dealTime = Time.now();
-                      };
-                      deals := TrieSet.put(deals, dealOrder, Types._hashOfDealOrder(dealOrder), Types._equalOfDealOrder);
-                      sells.delete(sellArray[0].index);
-                      buys.delete(buyArray[0].index);
-                  };
-                  case(#Err(e)) {};
-              }
-          };
-          case(#Err(e)) {};
-      };
-    }
+    // if(sells.size() > 0 and buys.size() > 0) {
+    //     var i1 = 0; 
+    //     var i2 = 0;
+    //     let buyArray = Array.sort(Iter.toArray(buys.vals()), Types.orderCompare);
+    //     let sellArray = Array.sort(Iter.toArray(sells.vals()), Types.orderCompare);
+        
+    //     // 第一次循环，处理价格相同的限价交易
+    //     label l1 for(x1 in buyArray.vals()) {
+    //         label l2 for(x2 in sellArray.vals()) {
+    //             if(x2.price > x1.price) { break l2};
+    //             if(x1.price == x2.price) {
+    //                 var buyAmount = 0;
+    //                 switch(buys.get(x1.index)) {
+    //                     case(null) { break l2;};
+    //                     case(?buyOrder) {
+    //                         buyAmount := buyOrder.amount;
+    //                         if(buyAmount == 0) break l2;
+    //                     };
+    //                 };
+    //                 var sellAmount = 0;
+    //                 switch(sells.get(x2.index)) {
+    //                     case(null) {continue l2};
+    //                     case(?sellOrder) {
+    //                         sellAmount := sellOrder.amount;
+    //                         if(sellAmount == 0) continue l2;
+    //                     };
+    //                 };
+    //                 let dealAmount = if(buyAmount <= sellAmount) { buyAmount } else { sellAmount };
+    //                 if((buyAmount - dealAmount) > 0) {
+    //                     switch(buys.get(x1.index)) {
+    //                         case(null) {};
+    //                         case(?buyOrder) {
+    //                             buyOrder.amount -= dealAmount;
+    //                             buys.put(x1.index, buyOrder);
+    //                         };
+    //                     };
+    //                 } else { buys.delete(x1.index);};
+    //                 if((sellAmount - dealAmount) > 0) {
+    //                     switch(sells.get(x2.index)) {
+    //                         case(null) {};
+    //                         case(?sellOrder) {
+    //                             sellOrder.amount -= dealAmount;
+    //                             sells.put(x2.index, sellOrder);
+    //                         };
+    //                     };
+    //                 } else { sells.delete(x2.index);};                    
+    //             };
+    //         }
+    //     }
+    // }
+  };
+  
+  public shared({caller}) func addDeals(
+    args: DealOrder
+  ): async Bool {
+    deals := TrieSet.put(deals, args, Types._hashOfDealOrder(args), Types._equalOfDealOrder);
+    true
   };
 
   public query({caller}) func getDeals(): async [DealOrder] {
       TrieSet.toArray(deals)
+  };
+
+  public query({caller}) func getRecentMonthDeals(): async [DealOrder] {
+      let pre_ans = TrieSet.toArray(deals);
+          // public type DealOrder = {
+    //     buyer: Principal;
+    //     seller: Principal;
+    //     sellOrderIndex: Nat;
+    //     buyOrderIndex: Nat;
+    //     amount: Nat;
+    //     price: Nat;
+    //     sum: Nat;
+    //     dealTime: Int;
+    // };
+      let _ans = Array.init<DealOrder>(pre_ans.size(), {
+        buyer = Principal.fromText("aaaaa-aa");
+        seller = Principal.fromText("aaaaa-aa");
+        index = 0;
+        owner = Principal.fromText("aaaaa-aa");
+        sellOrderIndex = 0;
+        buyOrderIndex = 0;
+        amount = 0;
+        price = 0;
+        sum = 0;
+        dealTime = 0;
+      });
+      let Time_LIMIT: Int = 2_592_000_000_000_000;
+      let now = Time.now();
+      var i = 0;
+      for(x in pre_ans.vals()) {
+          if((now - x.dealTime) <= Time_LIMIT) {
+            _ans[i] := x;
+            i += 1;
+          };
+      };
+      let ans = Array.init<DealOrder>(_ans.size(), {
+        buyer = Principal.fromText("aaaaa-aa");
+        seller = Principal.fromText("aaaaa-aa");
+        index = 0;
+        owner = Principal.fromText("aaaaa-aa");
+        sellOrderIndex = 0;
+        buyOrderIndex = 0;
+        amount = 0;
+        price = 0;
+        sum = 0;
+        dealTime = 0;
+      });   
+      i := 0;
+      for(x in _ans.vals()) {
+         ans[i] := x;
+         i += 1;
+      };      
+      Array.freeze<DealOrder>(ans)    
   };
 
     system func heartbeat() : async () {
