@@ -467,22 +467,16 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
     true
   };
 
+  public query({caller}) func getTImeNow(): async Int {
+    Time.now()
+  };
+
   public query({caller}) func getDeals(): async [DealOrder] {
       TrieSet.toArray(deals)
   };
 
   public query({caller}) func getRecentMonthDeals(): async [DealOrder] {
       let pre_ans = TrieSet.toArray(deals);
-          // public type DealOrder = {
-    //     buyer: Principal;
-    //     seller: Principal;
-    //     sellOrderIndex: Nat;
-    //     buyOrderIndex: Nat;
-    //     amount: Nat;
-    //     price: Nat;
-    //     sum: Nat;
-    //     dealTime: Int;
-    // };
       let _ans = Array.init<DealOrder>(pre_ans.size(), {
         buyer = Principal.fromText("aaaaa-aa");
         seller = Principal.fromText("aaaaa-aa");
@@ -524,10 +518,10 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       Array.freeze<DealOrder>(ans)    
   };
 
-    system func heartbeat() : async () {
-        let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
-        await marketActor.deal();
-    };
+    // system func heartbeat() : async () {
+    //     let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
+    //     await marketActor.deal();
+    // };
 
   private func _toOrderExt(order: Order): OrderExt {
       {

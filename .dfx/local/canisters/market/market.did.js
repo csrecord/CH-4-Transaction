@@ -83,6 +83,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(OrderExt)],
         ['query'],
       ),
+    'getTImeNow' : IDL.Func([], [IDL.Int], ['query']),
     'listBuy' : IDL.Func([ListArgs], [Result_1], []),
     'listSell' : IDL.Func([ListArgs], [Result_1], []),
     'updateBuy' : IDL.Func([UpdateArgs], [Result], []),
