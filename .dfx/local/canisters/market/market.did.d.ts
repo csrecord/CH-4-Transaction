@@ -72,6 +72,7 @@ export interface Sell {
   'listSell' : (arg_0: ListArgs) => Promise<Result_1>,
   'updateBuy' : (arg_0: UpdateArgs) => Promise<Result>,
   'updateSell' : (arg_0: UpdateArgs) => Promise<Result>,
+  'warning' : () => Promise<string>,
 }
 export interface UpdateArgs {
   'newAmount' : bigint,

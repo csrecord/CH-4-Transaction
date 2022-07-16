@@ -1,8 +1,27 @@
 // Version: 1.0.0
+type AssocList<K, V> = List<(K, V)>;
+type AssocList__1<K, V> = AssocList<K, V>;
+type Branch<K, V> = {left : Trie<K, V>; right : Trie<K, V>; size : Nat};
 type Company =
   {desc : Text; name : Text; principal : Principal; webLink : Text};
 type Company__1 = Company;
+type DealOrder =
+  {
+    amount : Nat;
+    buyOrderIndex : Nat;
+    buyer : Principal;
+    dealTime : Int;
+    price : Nat;
+    sellOrderIndex : Nat;
+    seller : Principal;
+    sum : Nat
+  };
+type DealOrder__1 = DealOrder;
 type Direction = {#Buy; #Sell};
+type Hash = Nat32;
+type Key<K> = {hash : Hash; key : K};
+type Leaf<K, V> = {keyvals : AssocList__1<Key<K>, V>; size : Nat};
+type List<T> = ?(T, List<T>);
 type Operation =
   {
     #cancel : {direction : Direction; orderId : Nat; user : Principal};
@@ -61,8 +80,10 @@ type TokenError =
     #LedgerTrap;
     #Other
   };
+type Trie<K, V> = {#branch : Branch<K, V>; #empty; #leaf : Leaf<K, V>};
 type TxReceiptToken = {#Err : TokenError; #Ok : Nat};
 actor {
+  stable var WarningThreshold : Nat;
   stable var buys_entries : [(Nat, Order__2)];
   stable ch4 :
     actor {
@@ -93,6 +114,12 @@ actor {
         shared (Principal, Principal, Nat) -> async TxReceiptToken
     };
   stable var companys_entries : [(Principal, Company__1)];
+  stable var deals :
+    {
+      #branch : Branch<DealOrder__1, ()>;
+      #empty;
+      #leaf : Leaf<DealOrder__1, ()>
+    };
   stable var listBuyIndex : Nat;
   stable var listSellIndex : Nat;
   stable var sells_entries : [(Nat, Order__2)];

@@ -85,16 +85,17 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   private stable let cny: TokenActor = actor(Principal.toText(cny_));
   private stable let ch4: TokenActor = actor(Principal.toText(ch4_));
   private stable let storage: StorageActor = actor(Principal.toText(storage_));
+  stable var WarningThreshold: Nat = 10;
   stable var sells_entries: [(Nat, Order)] = [];
   stable var buys_entries: [(Nat, Order)] = [];
   stable var companys_entries: [(Principal, Company)] = [];
   stable var listSellIndex = 0;
   stable var listBuyIndex = 0;
   stable var txcounter = 0;
+  stable var deals = TrieSet.empty<DealOrder>();
   var sells: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(sells_entries.vals(), Nat.equal, Hash.hash);
   var buys: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(buys_entries.vals(), Nat.equal, Hash.hash);
   var companys: TrieMap.TrieMap<Principal, Company> = TrieMap.fromEntries<Principal, Company>(companys_entries.vals(), Principal.equal, Principal.hash);
-  var deals = TrieSet.empty<DealOrder>();
 
   // 挂出售单 价格 与 接受价格下调幅度
   // 在ch4 canister查询余额够不够，不够就#Insufficient_CH4
@@ -279,6 +280,14 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
               return #err(#Transfer_ToUser_Error);
           };
       };
+  };
+
+  public shared({caller}) func warning(): async Text {
+    let balance = await ch4.balanceOf(caller);
+    if(balance <= WarningThreshold) {
+        return "Your CH4 balance is about to be low, please deal with it in time"
+    };
+    "sufficient CH4 balance"
   };
 
   public query({caller}) func getSellList(): async [OrderExt] {
@@ -518,6 +527,18 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       Array.freeze<DealOrder>(ans)    
   };
 
+  system func preupgrade() {
+    sells_entries := Iter.toArray(sells.entries());
+    buys_entries := Iter.toArray(buys.entries());
+    companys_entries := Iter.toArray(companys.entries());
+  };
+
+  system func postupgrade() {
+    sells_entries := [];
+    buys_entries := [];
+    companys_entries := [];
+  };
+  
     // system func heartbeat() : async () {
     //     let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
     //     await marketActor.deal();
@@ -534,37 +555,5 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
           createAt = order.createAt;
       }
   };
-
-//   public shared({caller}) func mintCh4(to: Principal,value: Nat): async Bool{
-//       switch(await ch4.mint(to, value)) {
-//           case(#Ok(txid)) { true};
-//           case(#Err(err)) { false};
-//       };
-//   };
-  
-//   public shared({caller}) func burnCh4(who: Principal,amount: Nat): async Result.Result<Bool, Error> {
-//       let balance = await ch4.balanceOf(caller);
-//       if(balance < amount) { return #err(#Insufficient_CH4);};
-//       switch(await ch4.transferFrom(caller, Principal.fromActor(this), amount)) {
-//           case(#Ok(id)) { return #ok(true);};
-//           case(#Err(e)) { return #err(#TransferFrom_CH4_Error);};
-//       }; 
-//   };
-  
-//   public shared({caller}) func ch4BalanceOf(who: Principal): async Nat {
-//       let balance = await ch4.balanceOf(who);
-//       balance
-//   };
-
-//   public shared({caller}) func cnyBalanceOf(who: Principal): async Nat {
-//       await cny.balanceOf(who)
-//   };
-
-//   public shared({caller}) func mintcny(to: Principal,value: Nat): async Bool{
-//       switch(await cny.mint(to, value)) {
-//           case(#Ok(txid)) { true};
-//           case(#Err(err)) { false};
-//       };
-//   };
 
 }

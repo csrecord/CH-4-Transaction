@@ -23,6 +23,7 @@ type Sell =
    listSell: (ListArgs) -> (Result_1);
    updateBuy: (UpdateArgs) -> (Result);
    updateSell: (UpdateArgs) -> (Result);
+   warning: () -> (text);
  };
 type Result_1 = 
  variant {

@@ -88,6 +88,7 @@ export const idlFactory = ({ IDL }) => {
     'listSell' : IDL.Func([ListArgs], [Result_1], []),
     'updateBuy' : IDL.Func([UpdateArgs], [Result], []),
     'updateSell' : IDL.Func([UpdateArgs], [Result], []),
+    'warning' : IDL.Func([], [IDL.Text], []),
   });
   return Sell;
 };
