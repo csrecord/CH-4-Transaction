@@ -1,5 +1,3 @@
-
-
 - 卖方挂单
 
 ```
@@ -125,3 +123,38 @@ public query({caller}) func getDeals(): async [DealOrder]
     };
 ```
 
+- 获取一个用户总共被政府派发的额度 -> CH4 Canister
+
+  ```
+      public query func minted_balanceof(who: Principal): async Nat {
+          _minted_balanceOf(who)
+      };
+  ```
+
+  
+
+- 获取一个用户燃烧排放的额度 -> CH4 Canister
+
+  ```
+      public query func burned_balanceof(who: Principal): async Nat {
+          _burned_balanceOf(who)
+      };
+  ```
+
+- 获取一个用户自己购入的总额度 -> market Canister
+
+  ```
+      public query func fromBuy_balanceof(who: Principal): async Nat {
+          _fromBuy_balanceOf(who)
+      };
+  ```
+
+- 获取一个用户自己卖出的总额度 -> market canister
+
+  ```
+      public query func toSell_balanceof(who: Principal): async Nat {
+          _toSell_balanceOf(who)
+      };
+  ```
+
+  
