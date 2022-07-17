@@ -18,6 +18,7 @@ import Nat "mo:base/Nat";
 import Nat64 "mo:base/Nat64";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import TrieSet "mo:base/TrieSet";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Cap "./cap/Cap";
 import Root "./cap/Root";
@@ -70,6 +71,7 @@ shared(msg) actor class Token(
     private stable var fee : Nat = _fee;
     private stable var balanceEntries : [(Principal, Nat)] = [];
     private stable var allowanceEntries : [(Principal, [(Principal, Nat)])] = [];
+    private stable var admins = TrieSet.fromArray<Principal>([owner_], Principal.hash, Principal.equal);
     private var balances = HashMap.HashMap<Principal, Nat>(1, Principal.equal, Principal.hash);
     private var allowances = HashMap.HashMap<Principal, HashMap.HashMap<Principal, Nat>>(1, Principal.equal, Principal.hash);
     balances.put(owner_, totalSupply_);
@@ -238,7 +240,10 @@ shared(msg) actor class Token(
     };
 
     public shared(msg) func mint(to: Principal, value: Nat): async TxReceipt {
-        if(msg.caller != owner_) {
+        // if(msg.caller != owner_) {
+        //     return #Err(#Unauthorized);
+        // };
+        if(TrieSet.mem(admins, to, Principal.hash(to), Principal.equal) == false) {
             return #Err(#Unauthorized);
         };
         let to_balance = _balanceOf(to);
@@ -256,17 +261,17 @@ shared(msg) actor class Token(
         return #Ok(txcounter - 1);
     };
 
-    public shared(msg) func burn(amount: Nat): async TxReceipt {
-        let from_balance = _balanceOf(msg.caller);
+    public shared(msg) func burn(company: Principal,amount: Nat): async TxReceipt {
+        let from_balance = _balanceOf(company);
         if(from_balance < amount) {
             return #Err(#InsufficientBalance);
         };
         totalSupply_ -= amount;
-        balances.put(msg.caller, from_balance - amount);
+        balances.put(company, from_balance - amount);
         ignore addRecord(
-            msg.caller, "burn",
+            company, "burn",
             [
-                ("from", #Principal(msg.caller)),
+                ("from", #Principal(company)),
                 ("value", #U64(u64(amount))),
                 ("fee", #U64(u64(0)))
             ]
@@ -355,6 +360,11 @@ shared(msg) actor class Token(
         owner_ := _owner;
     };
 
+    public shared({caller}) func addAdmin(admin: Principal) {
+        assert(TrieSet.mem(admins, caller, Principal.hash(caller), Principal.equal) == true);
+        admins := TrieSet.put(admins, admin, Principal.hash(admin), Principal.equal);
+    };
+
     public type TokenInfo = {
         metadata: Metadata;
         feeTo: Principal;
@@ -381,6 +391,10 @@ shared(msg) actor class Token(
             holderNumber = balances.size();
             cycles = ExperimentalCycles.balance();
         }
+    };
+
+    public query func getAdmins(): async [Principal] {
+        TrieSet.toArray(admins)
     };
 
     public query func getHolders(start: Nat, limit: Nat) : async [(Principal, Nat)] {
