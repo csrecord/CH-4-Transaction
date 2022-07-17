@@ -94,4 +94,5 @@ service : {
   listSell: (ListArgs) -> (Result_1);
   updateBuy: (UpdateArgs) -> (Result);
   updateSell: (UpdateArgs) -> (Result);
+  warning: () -> (text);
 }

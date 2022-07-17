@@ -417,58 +417,77 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
 
   // 撮合交易
   public shared({caller}) func deal(): async () {
-    // if(sells.size() > 0 and buys.size() > 0) {
-    //     var i1 = 0; 
-    //     var i2 = 0;
-    //     let buyArray = Array.sort(Iter.toArray(buys.vals()), Types.orderCompare);
-    //     let sellArray = Array.sort(Iter.toArray(sells.vals()), Types.orderCompare);
-        
-    //     // 第一次循环，处理价格相同的限价交易
-    //     label l1 for(x1 in buyArray.vals()) {
-    //         label l2 for(x2 in sellArray.vals()) {
-    //             if(x2.price > x1.price) { break l2};
-    //             if(x1.price == x2.price) {
-    //                 var buyAmount = 0;
-    //                 switch(buys.get(x1.index)) {
-    //                     case(null) { break l2;};
-    //                     case(?buyOrder) {
-    //                         buyAmount := buyOrder.amount;
-    //                         if(buyAmount == 0) break l2;
-    //                     };
-    //                 };
-    //                 var sellAmount = 0;
-    //                 switch(sells.get(x2.index)) {
-    //                     case(null) {continue l2};
-    //                     case(?sellOrder) {
-    //                         sellAmount := sellOrder.amount;
-    //                         if(sellAmount == 0) continue l2;
-    //                     };
-    //                 };
-    //                 let dealAmount = if(buyAmount <= sellAmount) { buyAmount } else { sellAmount };
-    //                 if((buyAmount - dealAmount) > 0) {
-    //                     switch(buys.get(x1.index)) {
-    //                         case(null) {};
-    //                         case(?buyOrder) {
-    //                             buyOrder.amount -= dealAmount;
-    //                             buys.put(x1.index, buyOrder);
-    //                         };
-    //                     };
-    //                 } else { buys.delete(x1.index);};
-    //                 if((sellAmount - dealAmount) > 0) {
-    //                     switch(sells.get(x2.index)) {
-    //                         case(null) {};
-    //                         case(?sellOrder) {
-    //                             sellOrder.amount -= dealAmount;
-    //                             sells.put(x2.index, sellOrder);
-    //                         };
-    //                     };
-    //                 } else { sells.delete(x2.index);};                    
-    //             };
-    //         }
-    //     }
-    // }
+    if(sells.size() > 0 and buys.size() > 0) {
+        var i1 = 0; 
+        var i2 = 0;
+        let buyArray = Array.sort(Iter.toArray(buys.vals()), Types.orderCompare);
+        let sellArray = Array.sort(Iter.toArray(sells.vals()), Types.orderCompare);
+
+        label l1 for(x1 in buyArray.vals()) {
+            label l2 for(x2 in sellArray.vals()) {
+                if(x2.price > x1.price) { break l2};
+                if(x1.price == x2.price) {
+                    var buyAmount = 0;
+                    switch(buys.get(x1.index)) {
+                        case(null) { break l2;};
+                        case(?buyOrder) {
+                            buyAmount := buyOrder.amount;
+                            if(buyAmount == 0) break l2;
+                        };
+                    };
+                    var sellAmount = 0;
+                    switch(sells.get(x2.index)) {
+                        case(null) {continue l2};
+                        case(?sellOrder) {
+                            sellAmount := sellOrder.amount;
+                            if(sellAmount == 0) continue l2;
+                        };
+                    };
+                    let dealAmount = if(buyAmount <= sellAmount) { buyAmount } else { sellAmount };
+                    // 转ch4给买家
+                    switch(await ch4.transfer(x1.owner, dealAmount)) {
+                        case(#Ok(id)) {};
+                        case(#Err(e)) {};
+                    };
+                    switch(await cny.transfer(x2.owner, dealAmount * x1.price)) {
+                        case(#Ok(id)) {};
+                        case(#Err(e)) {};
+                    };
+                    if((buyAmount - dealAmount) > 0) {
+                        switch(buys.get(x1.index)) {
+                            case(null) {};
+                            case(?buyOrder) {
+                                buyOrder.amount -= dealAmount;
+                                buys.put(x1.index, buyOrder);
+                            };
+                        };
+                    } else { buys.delete(x1.index);};
+                    if((sellAmount - dealAmount) > 0) {
+                        switch(sells.get(x2.index)) {
+                            case(null) {};
+                            case(?sellOrder) {
+                                sellOrder.amount -= dealAmount;
+                                sells.put(x2.index, sellOrder);
+                            };
+                        };
+                    } else { sells.delete(x2.index);};
+                    let dealOrder: DealOrder = {
+                        buyer = x1.owner;
+                        seller = x2.owner;
+                        sellOrderIndex = x2.index;
+                        buyOrderIndex = x1.index;
+                        amount = dealAmount;
+                        price = x1.price;
+                        sum = dealAmount * x1.price;
+                        dealTime = Time.now();
+                    };
+                    deals := TrieSet.put(deals, dealOrder, Types._hashOfDealOrder(dealOrder), Types._equalOfDealOrder);
+                };
+            }
+        }
+    }
   };
-  
+
   public shared({caller}) func addDeals(
     args: DealOrder
   ): async Bool {
@@ -539,10 +558,10 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
     companys_entries := [];
   };
   
-    // system func heartbeat() : async () {
-    //     let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
-    //     await marketActor.deal();
-    // };
+  system func heartbeat(): async () {
+    let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
+    await marketActor.deal();
+  };
 
   private func _toOrderExt(order: Order): OrderExt {
       {
