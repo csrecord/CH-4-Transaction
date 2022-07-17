@@ -32,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'feeTo' : IDL.Principal,
   });
   const Token = IDL.Service({
+    'addAdmin' : IDL.Func([IDL.Principal], [], ['oneway']),
     'allowance' : IDL.Func(
         [IDL.Principal, IDL.Principal],
         [IDL.Nat],
@@ -39,8 +40,9 @@ export const idlFactory = ({ IDL }) => {
       ),
     'approve' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
     'balanceOf' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
-    'burn' : IDL.Func([IDL.Nat], [TxReceipt], []),
+    'burn' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
     'decimals' : IDL.Func([], [IDL.Nat8], ['query']),
+    'getAdmins' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getAllowanceSize' : IDL.Func([], [IDL.Nat], ['query']),
     'getHolders' : IDL.Func(
         [IDL.Nat, IDL.Nat],

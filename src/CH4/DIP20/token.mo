@@ -19,6 +19,7 @@ import Nat64 "mo:base/Nat64";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import TrieSet "mo:base/TrieSet";
+import TrieMap "mo:base/TrieMap";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Cap "./cap/Cap";
 import Root "./cap/Root";
@@ -71,9 +72,13 @@ shared(msg) actor class Token(
     private stable var fee : Nat = _fee;
     private stable var balanceEntries : [(Principal, Nat)] = [];
     private stable var allowanceEntries : [(Principal, [(Principal, Nat)])] = [];
+    stable var minted_entries: [(Principal, Nat)] = [];
+    stable var burned_entries: [(Principal, Nat)] = [];
     private stable var admins = TrieSet.fromArray<Principal>([owner_], Principal.hash, Principal.equal);
     private var balances = HashMap.HashMap<Principal, Nat>(1, Principal.equal, Principal.hash);
     private var allowances = HashMap.HashMap<Principal, HashMap.HashMap<Principal, Nat>>(1, Principal.equal, Principal.hash);
+    var minted: TrieMap.TrieMap<Principal, Nat> = TrieMap.fromEntries<Principal, Nat>(minted_entries.vals(), Principal.equal, Principal.hash);
+    var burned: TrieMap.TrieMap<Principal, Nat> = TrieMap.fromEntries<Principal, Nat>(burned_entries.vals(), Principal.equal, Principal.hash);
     balances.put(owner_, totalSupply_);
     private stable let genesis : TxRecord = {
         caller = ?owner_;
@@ -127,6 +132,20 @@ shared(msg) actor class Token(
 
     private func _balanceOf(who: Principal) : Nat {
         switch (balances.get(who)) {
+            case (?balance) { return balance; };
+            case (_) { return 0; };
+        }
+    };
+
+    private func _minted_balanceOf(who: Principal): Nat {
+        switch(minted.get(who)) {
+            case (?balance) { return balance; };
+            case (_) { return 0; };
+        }
+    };
+
+    private func _burned_balanceOf(who: Principal): Nat {
+        switch(burned.get(who)) {
             case (?balance) { return balance; };
             case (_) { return 0; };
         }
@@ -243,12 +262,14 @@ shared(msg) actor class Token(
         // if(msg.caller != owner_) {
         //     return #Err(#Unauthorized);
         // };
-        if(TrieSet.mem(admins, to, Principal.hash(to), Principal.equal) == false) {
+        if(TrieSet.mem(admins, msg.caller, Principal.hash(msg.caller), Principal.equal) == false) {
             return #Err(#Unauthorized);
         };
         let to_balance = _balanceOf(to);
         totalSupply_ += value;
         balances.put(to, to_balance + value);
+        let to_minted_balance = _minted_balanceOf(to);
+        minted.put(to, to_minted_balance + value);
         ignore addRecord(
             msg.caller, "mint",
             [
@@ -262,12 +283,17 @@ shared(msg) actor class Token(
     };
 
     public shared(msg) func burn(company: Principal,amount: Nat): async TxReceipt {
+        if(TrieSet.mem(admins, msg.caller, Principal.hash(msg.caller), Principal.equal) == false) {
+            return #Err(#Unauthorized);
+        };
         let from_balance = _balanceOf(company);
         if(from_balance < amount) {
             return #Err(#InsufficientBalance);
         };
         totalSupply_ -= amount;
         balances.put(company, from_balance - amount);
+        let from_minted_balance = _burned_balanceOf(company);
+        burned.put(company, from_minted_balance + amount);
         ignore addRecord(
             company, "burn",
             [
@@ -306,6 +332,14 @@ shared(msg) actor class Token(
 
     public query func balanceOf(who: Principal) : async Nat {
         return _balanceOf(who);
+    };
+
+    public query func minted_balanceof(who: Principal): async Nat {
+        _minted_balanceOf(who)
+    };
+
+    public query func burned_balanceof(who: Principal): async Nat {
+        _burned_balanceOf(who)
     };
 
     public query func allowance(owner: Principal, spender: Principal) : async Nat {
@@ -439,6 +473,8 @@ shared(msg) actor class Token(
     */
     system func preupgrade() {
         balanceEntries := Iter.toArray(balances.entries());
+        minted_entries := Iter.toArray(minted.entries());
+        burned_entries := Iter.toArray(minted.entries());
         var size : Nat = allowances.size();
         var temp : [var (Principal, [(Principal, Nat)])] = Array.init<(Principal, [(Principal, Nat)])>(size, (owner_, []));
         size := 0;
@@ -457,5 +493,7 @@ shared(msg) actor class Token(
             allowances.put(k, allowed_temp);
         };
         allowanceEntries := [];
+        minted_entries := [];
+        burned_entries := [];
     };
 };

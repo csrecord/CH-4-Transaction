@@ -89,10 +89,14 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   stable var sells_entries: [(Nat, Order)] = [];
   stable var buys_entries: [(Nat, Order)] = [];
   stable var companys_entries: [(Principal, Company)] = [];
+  stable var fromBuy_entries: [(Principal, Nat)] = [];
+  stable var toSell_entries: [(Principal, Nat)] = [];
   stable var listSellIndex = 0;
   stable var listBuyIndex = 0;
   stable var txcounter = 0;
   stable var deals = TrieSet.empty<DealOrder>();
+  var fromBuy: TrieMap.TrieMap<Principal, Nat> = TrieMap.fromEntries<Principal, Nat>(fromBuy_entries.vals(), Principal.equal, Principal.hash);
+  var toSell: TrieMap.TrieMap<Principal, Nat> = TrieMap.fromEntries<Principal, Nat>(toSell_entries.vals(), Principal.equal, Principal.hash);
   var sells: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(sells_entries.vals(), Nat.equal, Hash.hash);
   var buys: TrieMap.TrieMap<Nat, Order> = TrieMap.fromEntries<Nat, Order>(buys_entries.vals(), Nat.equal, Hash.hash);
   var companys: TrieMap.TrieMap<Principal, Company> = TrieMap.fromEntries<Principal, Company>(companys_entries.vals(), Principal.equal, Principal.hash);
@@ -404,17 +408,6 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       true
   };
 
-
-    // public type Order = {
-    //     index: Nat;
-    //     owner: Principal;
-    //     var amount: Nat;
-    //     var delta: Nat; //接受多少差价
-    //     var price: Nat 
-    //     var status: OrderStatus;
-    //     createAt: Int;
-    // };
-
   // 撮合交易
   public shared({caller}) func deal(): async () {
     if(sells.size() > 0 and buys.size() > 0) {
@@ -471,6 +464,11 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
                             };
                         };
                     } else { sells.delete(x2.index);};
+                    // 
+                    let fromBuy_balance = _fromBuy_balanceOf(x1.owner);
+                    fromBuy.put(x1.owner, dealAmount);
+                    let toSell_balance = _toSell_balanceOf(x2.owner);
+                    toSell.put(x2.owner, dealAmount);
                     let dealOrder: DealOrder = {
                         buyer = x1.owner;
                         seller = x2.owner;
@@ -502,6 +500,14 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
   public query({caller}) func getDeals(): async [DealOrder] {
       TrieSet.toArray(deals)
   };
+
+    public query func fromBuy_balanceof(who: Principal): async Nat {
+        _fromBuy_balanceOf(who)
+    };
+
+    public query func toSell_balanceof(who: Principal): async Nat {
+        _toSell_balanceOf(who)
+    };
 
   public query({caller}) func getRecentMonthDeals(): async [DealOrder] {
       let pre_ans = TrieSet.toArray(deals);
@@ -550,18 +556,36 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
     sells_entries := Iter.toArray(sells.entries());
     buys_entries := Iter.toArray(buys.entries());
     companys_entries := Iter.toArray(companys.entries());
+    fromBuy_entries := Iter.toArray(fromBuy.entries());
+    toSell_entries := Iter.toArray(toSell.entries());
   };
 
   system func postupgrade() {
     sells_entries := [];
     buys_entries := [];
     companys_entries := [];
+    fromBuy_entries := [];
+    toSell_entries := [];
   };
   
   system func heartbeat(): async () {
     let marketActor: MarketActor = actor("ngtm2-tyaaa-aaaan-qahpa-cai");
     await marketActor.deal();
   };
+
+
+    private func _fromBuy_balanceOf(who: Principal): Nat {
+        switch(fromBuy.get(who)) {
+            case (?balance) { return balance; };
+            case (_) { return 0; };
+        }
+    };
+    private func _toSell_balanceOf(who: Principal): Nat {
+        switch(toSell.get(who)) {
+            case (?balance) { return balance; };
+            case (_) { return 0; };
+        }
+    };
 
   private func _toOrderExt(order: Order): OrderExt {
       {

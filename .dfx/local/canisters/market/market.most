@@ -120,6 +120,7 @@ actor {
       #empty;
       #leaf : Leaf<DealOrder__1, ()>
     };
+  stable var fromBuy_entries : [(Principal, Nat)];
   stable var listBuyIndex : Nat;
   stable var listSellIndex : Nat;
   stable var sells_entries : [(Nat, Order__2)];
@@ -128,5 +129,6 @@ actor {
       addOrder : shared OrderExt__1 -> async Nat;
       addRecord : shared (Principal, Operation__1, Time) -> async Nat
     };
+  stable var toSell_entries : [(Principal, Nat)];
   stable var txcounter : Nat
 };

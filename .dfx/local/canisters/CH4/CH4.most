@@ -16,6 +16,7 @@ actor {
   stable var allowanceEntries : [(Principal, [(Principal, Nat)])];
   stable var balanceEntries : [(Principal, Nat)];
   stable var blackhole : Principal;
+  stable var burned_entries : [(Principal, Nat)];
   stable var decimals_ : Nat8;
   stable var fee : Nat;
   stable var feeTo : Principal;
@@ -32,6 +33,7 @@ actor {
       to : Principal
     };
   stable var logo_ : Text;
+  stable var minted_entries : [(Principal, Nat)];
   stable var name_ : Text;
   stable var owner_ : Principal;
   stable var symbol_ : Text;
