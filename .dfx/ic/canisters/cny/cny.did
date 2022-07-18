@@ -30,6 +30,7 @@ type Token =
    approve: (principal, nat) -> (TxReceipt);
    balanceOf: (principal) -> (nat) query;
    burn: (principal, nat) -> (TxReceipt);
+   burned_balanceof: (principal) -> (nat) query;
    decimals: () -> (nat8) query;
    getAdmins: () -> (vec principal) query;
    getAllowanceSize: () -> (nat) query;
@@ -47,6 +48,7 @@ type Token =
    historySize: () -> (nat) query;
    logo: () -> (text) query;
    mint: (principal, nat) -> (TxReceipt);
+   minted_balanceof: (principal) -> (nat) query;
    name: () -> (text) query;
    setFee: (nat) -> () oneway;
    setFeeTo: (principal) -> () oneway;

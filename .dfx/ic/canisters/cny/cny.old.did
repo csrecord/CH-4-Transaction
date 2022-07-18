@@ -35,11 +35,13 @@ type Metadata =
    totalSupply: nat;
  };
 service : {
+  addAdmin: (principal) -> () oneway;
   allowance: (principal, principal) -> (nat) query;
   approve: (principal, nat) -> (TxReceipt);
   balanceOf: (principal) -> (nat) query;
-  burn: (nat) -> (TxReceipt);
+  burn: (principal, nat) -> (TxReceipt);
   decimals: () -> (nat8) query;
+  getAdmins: () -> (vec principal) query;
   getAllowanceSize: () -> (nat) query;
   getHolders: (nat, nat) -> (vec record {
                                    principal;
