@@ -83,6 +83,7 @@ service : {
   cancelBuy: (CancelArgs) -> (Result_1);
   cancelSell: (CancelArgs) -> (Result_1);
   deal: () -> ();
+  fromBuy_balanceof: (principal) -> (nat) query;
   getBuyList: () -> (vec OrderExt) query;
   getDeals: () -> (vec DealOrder) query;
   getRecentMonthDeals: () -> (vec DealOrder) query;
@@ -92,6 +93,7 @@ service : {
   getTImeNow: () -> (int) query;
   listBuy: (ListArgs) -> (Result_1);
   listSell: (ListArgs) -> (Result_1);
+  toSell_balanceof: (principal) -> (nat) query;
   updateBuy: (UpdateArgs) -> (Result);
   updateSell: (UpdateArgs) -> (Result);
   warning: () -> (text);
