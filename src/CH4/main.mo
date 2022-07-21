@@ -414,6 +414,18 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       true
   };
 
+  public query({caller}) func getCompanyInfo(user: Principal): async Result.Result<Company, ()> {
+    switch(companys.get(user)) {
+        case(null) { return #err(());};
+        case(?com) { return #ok(com);};
+    };
+  };
+
+  public query({caller}) func getAllCompanyPr(): async [Principal] {
+    if(companys.size() <= 0) return [];
+    Iter.toArray(companys.keys())
+  };
+
   // 撮合交易
   public shared({caller}) func deal(): async () {
     if(sells.size() > 0 and buys.size() > 0) {

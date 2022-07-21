@@ -55,6 +55,8 @@ export type Result = { 'ok' : boolean } |
   { 'err' : Error };
 export type Result_1 = { 'ok' : bigint } |
   { 'err' : Error };
+export type Result_2 = { 'ok' : Company } |
+  { 'err' : null };
 export interface Sell {
   'addCompany' : (arg_0: Company) => Promise<boolean>,
   'addDeals' : (arg_0: DealOrder) => Promise<boolean>,
@@ -62,7 +64,9 @@ export interface Sell {
   'cancelSell' : (arg_0: CancelArgs) => Promise<Result_1>,
   'deal' : () => Promise<undefined>,
   'fromBuy_balanceof' : (arg_0: Principal) => Promise<bigint>,
+  'getAllCompanyPr' : () => Promise<Array<Principal>>,
   'getBuyList' : () => Promise<Array<OrderExt>>,
+  'getCompanyInfo' : (arg_0: Principal) => Promise<Result_2>,
   'getDeals' : () => Promise<Array<DealOrder>>,
   'getRecentMonthDeals' : () => Promise<Array<DealOrder>>,
   'getSellList' : () => Promise<Array<OrderExt>>,

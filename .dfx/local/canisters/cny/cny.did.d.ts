@@ -10,11 +10,14 @@ export interface Metadata {
 }
 export type Time = bigint;
 export interface Token {
+  'addAdmin' : (arg_0: Principal) => Promise<undefined>,
   'allowance' : (arg_0: Principal, arg_1: Principal) => Promise<bigint>,
   'approve' : (arg_0: Principal, arg_1: bigint) => Promise<TxReceipt>,
   'balanceOf' : (arg_0: Principal) => Promise<bigint>,
-  'burn' : (arg_0: bigint) => Promise<TxReceipt>,
+  'burn' : (arg_0: Principal, arg_1: bigint) => Promise<TxReceipt>,
+  'burned_balanceof' : (arg_0: Principal) => Promise<bigint>,
   'decimals' : () => Promise<number>,
+  'getAdmins' : () => Promise<Array<Principal>>,
   'getAllowanceSize' : () => Promise<bigint>,
   'getHolders' : (arg_0: bigint, arg_1: bigint) => Promise<
       Array<[Principal, bigint]>
@@ -28,6 +31,7 @@ export interface Token {
   'historySize' : () => Promise<bigint>,
   'logo' : () => Promise<string>,
   'mint' : (arg_0: Principal, arg_1: bigint) => Promise<TxReceipt>,
+  'minted_balanceof' : (arg_0: Principal) => Promise<bigint>,
   'name' : () => Promise<string>,
   'setFee' : (arg_0: bigint) => Promise<undefined>,
   'setFeeTo' : (arg_0: Principal) => Promise<undefined>,

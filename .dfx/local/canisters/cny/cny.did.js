@@ -32,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'feeTo' : IDL.Principal,
   });
   const Token = IDL.Service({
+    'addAdmin' : IDL.Func([IDL.Principal], [], ['oneway']),
     'allowance' : IDL.Func(
         [IDL.Principal, IDL.Principal],
         [IDL.Nat],
@@ -39,8 +40,10 @@ export const idlFactory = ({ IDL }) => {
       ),
     'approve' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
     'balanceOf' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
-    'burn' : IDL.Func([IDL.Nat], [TxReceipt], []),
+    'burn' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
+    'burned_balanceof' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
     'decimals' : IDL.Func([], [IDL.Nat8], ['query']),
+    'getAdmins' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getAllowanceSize' : IDL.Func([], [IDL.Nat], ['query']),
     'getHolders' : IDL.Func(
         [IDL.Nat, IDL.Nat],
@@ -58,6 +61,7 @@ export const idlFactory = ({ IDL }) => {
     'historySize' : IDL.Func([], [IDL.Nat], ['query']),
     'logo' : IDL.Func([], [IDL.Text], ['query']),
     'mint' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
+    'minted_balanceof' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
     'name' : IDL.Func([], [IDL.Text], ['query']),
     'setFee' : IDL.Func([IDL.Nat], [], ['oneway']),
     'setFeeTo' : IDL.Func([IDL.Principal], [], ['oneway']),

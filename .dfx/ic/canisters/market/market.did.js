@@ -51,6 +51,7 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
     'delta' : IDL.Nat,
   });
+  const Result_2 = IDL.Variant({ 'ok' : Company, 'err' : IDL.Null });
   const ListArgs = IDL.Record({
     'price' : IDL.Nat,
     'amount' : IDL.Nat,
@@ -70,7 +71,9 @@ export const idlFactory = ({ IDL }) => {
     'cancelSell' : IDL.Func([CancelArgs], [Result_1], []),
     'deal' : IDL.Func([], [], []),
     'fromBuy_balanceof' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
+    'getAllCompanyPr' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getBuyList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
+    'getCompanyInfo' : IDL.Func([IDL.Principal], [Result_2], ['query']),
     'getDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
     'getRecentMonthDeals' : IDL.Func([], [IDL.Vec(DealOrder)], ['query']),
     'getSellList' : IDL.Func([], [IDL.Vec(OrderExt)], ['query']),
