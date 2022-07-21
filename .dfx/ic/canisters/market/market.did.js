@@ -51,7 +51,7 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
     'delta' : IDL.Nat,
   });
-  const Result_2 = IDL.Variant({ 'ok' : Company, 'err' : IDL.Null });
+  const Result_2 = IDL.Variant({ 'ok' : Company, 'err' : IDL.Text });
   const ListArgs = IDL.Record({
     'price' : IDL.Nat,
     'amount' : IDL.Nat,

@@ -414,9 +414,9 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
       true
   };
 
-  public query({caller}) func getCompanyInfo(user: Principal): async Result.Result<Company, ()> {
+  public query({caller}) func getCompanyInfo(user: Principal): async Result.Result<Company, Text> {
     switch(companys.get(user)) {
-        case(null) { return #err(());};
+        case(null) { return #err("unregistered");};
         case(?com) { return #ok(com);};
     };
   };

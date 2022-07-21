@@ -56,7 +56,7 @@ export type Result = { 'ok' : boolean } |
 export type Result_1 = { 'ok' : bigint } |
   { 'err' : Error };
 export type Result_2 = { 'ok' : Company } |
-  { 'err' : null };
+  { 'err' : string };
 export interface Sell {
   'addCompany' : (arg_0: Company) => Promise<boolean>,
   'addDeals' : (arg_0: DealOrder) => Promise<boolean>,
