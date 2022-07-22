@@ -157,5 +157,10 @@ module {
         else { #greater}
     };
     
+    public func rmdCompare(x: DealOrder, y: DealOrder): {#less; #equal; #greater} {
+        if(x.dealTime < y.dealTime) { #less }
+        else if(x.dealTime == y.dealTime) { #equal }
+        else { #greater }
+    };
 };    
 

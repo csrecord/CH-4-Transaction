@@ -7,7 +7,7 @@ type UpdateArgs =
  };
 type Result_2 = 
  variant {
-   err;
+   err: text;
    ok: Company;
  };
 type Result_1 = 

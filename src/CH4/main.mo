@@ -567,7 +567,8 @@ shared(installer) actor class Sell(admin_ : Principal,cny_: Principal,ch4_: Prin
          ans[i] := x;
          i += 1;
       };      
-      Array.freeze<DealOrder>(ans)    
+      let true_ans = Array.sort(Array.freeze(ans), Types.rmdCompare); 
+      true_ans
   };
 
   system func preupgrade() {
